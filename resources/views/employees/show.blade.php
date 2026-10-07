@@ -4,14 +4,17 @@
 
 @section('content')
     <div class="d-flex justify-content-between align-items-start mb-3">
-        <div>
-            <h5 class="mb-1">{{ $employee->name }}</h5>
-            <code class="small">{{ $employee->employee_number }}</code>
-            @if ($employee->is_active)
-                <span class="badge bg-success">Aktif</span>
-            @else
-                <span class="badge bg-danger">Resign</span>
-            @endif
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ $employee->photoUrl() }}" alt="{{ $employee->name }}" class="rounded border shadow-sm" style="width: 60px; height: 80px; object-fit: cover;">
+            <div>
+                <h5 class="mb-1">{{ $employee->name }}</h5>
+                <code class="small">{{ $employee->employee_number }}</code>
+                @if ($employee->is_active)
+                    <span class="badge bg-success ms-1">Aktif</span>
+                @else
+                    <span class="badge bg-danger ms-1">Resign</span>
+                @endif
+            </div>
         </div>
         <div>
             @can('view', \App\Models\Employee::class)
@@ -42,20 +45,28 @@
                         <div>{{ $employee->nik_ktp ?? '-' }}</div>
                     </div>
                     <div class="col-6 mb-3">
-                        <div class="text-muted">Jenis Kelamin</div>
-                        <div>{{ $employee->gender === 'L' ? 'Laki-laki' : ($employee->gender === 'P' ? 'Perempuan' : '-') }}</div>
-                    </div>
-                    <div class="col-6 mb-3">
-                        <div class="text-muted">Tempat, Tanggal Lahir</div>
-                        <div>{{ $employee->birth_place ?? '-' }}@if($employee->birth_date), {{ $employee->birth_date->format('d/m/Y') }}@endif</div>
-                    </div>
-                    <div class="col-6 mb-3">
                         <div class="text-muted">No. WhatsApp</div>
                         <div>{{ $employee->phone ?? '-' }}</div>
                     </div>
                     <div class="col-6 mb-3">
                         <div class="text-muted">Email</div>
                         <div>{{ $employee->email ?? '-' }}</div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-muted">Nomor JMO (BPJS TK)</div>
+                        <div>{{ $employee->no_jmo ?? '-' }}</div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-muted">Nomor KPJ (Jamsostek)</div>
+                        <div>{{ $employee->no_kpj ?? '-' }}</div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-muted">Jenis Kelamin</div>
+                        <div>{{ $employee->gender === 'L' ? 'Laki-laki' : ($employee->gender === 'P' ? 'Perempuan' : '-') }}</div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-muted">Tempat, Tanggal Lahir</div>
+                        <div>{{ $employee->birth_place ?? '-' }}@if($employee->birth_date), {{ $employee->birth_date->format('d/m/Y') }}@endif</div>
                     </div>
                     <div class="col-6 mb-3">
                         <div class="text-muted">Alamat</div>

@@ -6,7 +6,7 @@
     <h5 class="mb-3">Edit Karyawan — {{ $employee->name }}</h5>
 
     <div class="noc-stat-card bg-white p-4" style="max-width: 720px;">
-        <form method="POST" action="{{ route('employees.update', $employee) }}">
+        <form method="POST" action="{{ route('employees.update', $employee) }}" enctype="multipart/form-data">
             @csrf
             @method('PUT')
             @include('employees._form')

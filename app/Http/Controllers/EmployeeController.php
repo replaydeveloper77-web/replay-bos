@@ -60,7 +60,9 @@ class EmployeeController extends Controller
     {
         $this->employeeService->create($request->validated(), $request->user(), $request);
 
-        return redirect()->route('employees.index')->with('status', 'Karyawan berhasil ditambahkan.');
+        $target = $request->input('redirect_to', route('employees.index'));
+
+        return redirect($target)->with('status', 'Data karyawan berhasil ditambahkan.');
     }
 
     public function edit(Employee $employee)
@@ -76,7 +78,9 @@ class EmployeeController extends Controller
     {
         $this->employeeService->update($employee, $request->validated(), $request->user(), $request);
 
-        return redirect()->route('employees.index')->with('status', 'Karyawan berhasil diperbarui.');
+        $target = $request->input('redirect_to', route('employees.index'));
+
+        return redirect($target)->with('status', 'Data karyawan berhasil diperbarui.');
     }
 
     public function disable(Request $request, Employee $employee)

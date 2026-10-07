@@ -24,6 +24,9 @@ class Employee extends Model
         'address',
         'phone',
         'email',
+        'no_jmo',
+        'no_kpj',
+        'photo_path',
         'position',
         'department',
         'employment_status',
@@ -47,6 +50,15 @@ class Employee extends Model
             'resign_date' => 'date',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function photoUrl(): string
+    {
+        if ($this->photo_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($this->photo_path)) {
+            return asset('storage/'.$this->photo_path);
+        }
+
+        return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&color=4F46E5&background=EEF2FF&size=128';
     }
 
     public function needsContractEndDate(): bool

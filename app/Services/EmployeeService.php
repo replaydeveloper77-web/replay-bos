@@ -15,6 +15,13 @@ class EmployeeService
 
     public function create(array $data, User $actor, Request $request): Employee
     {
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('employees/photos', 'public');
+        }
+
+        $isActive = isset($data['is_active']) ? filter_var($data['is_active'], FILTER_VALIDATE_BOOLEAN) : true;
+
         $employee = Employee::create([
             'employee_number' => ($data['employee_number'] ?? null) ?: $this->generateEmployeeNumber(),
             'name' => $data['name'],
@@ -25,15 +32,19 @@ class EmployeeService
             'address' => $data['address'] ?? null,
             'phone' => $data['phone'] ?? null,
             'email' => $data['email'] ?? null,
+            'no_jmo' => $data['no_jmo'] ?? null,
+            'no_kpj' => $data['no_kpj'] ?? null,
+            'photo_path' => $photoPath,
             'position' => $data['position'] ?? null,
-            'department' => $data['department'],
-            'employment_status' => $data['employment_status'],
+            'department' => $data['department'] ?? 'OTHER',
+            'employment_status' => $data['employment_status'] ?? 'TETAP',
             'join_date' => $data['join_date'] ?? null,
             'contract_end_date' => $data['contract_end_date'] ?? null,
             'salary' => $data['salary'] ?? null,
+            'resign_date' => $data['resign_date'] ?? null,
             'user_id' => $data['user_id'] ?? null,
             'notes' => $data['notes'] ?? null,
-            'is_active' => true,
+            'is_active' => $isActive,
             'created_by' => $actor->id,
         ]);
 
@@ -52,11 +63,22 @@ class EmployeeService
 
     public function update(Employee $employee, array $data, User $actor, Request $request): Employee
     {
-        $old = $employee->only(['name', 'nik_ktp', 'phone', 'email', 'position', 'department', 'employment_status', 'join_date', 'resign_date']);
+        $old = $employee->only(['name', 'nik_ktp', 'phone', 'email', 'position', 'department', 'employment_status', 'join_date', 'resign_date', 'no_jmo', 'no_kpj', 'is_active']);
+
+        if ($request->hasFile('photo')) {
+            if ($employee->photo_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($employee->photo_path)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($employee->photo_path);
+            }
+            $data['photo_path'] = $request->file('photo')->store('employees/photos', 'public');
+        }
+
+        if (array_key_exists('is_active', $data)) {
+            $data['is_active'] = filter_var($data['is_active'], FILTER_VALIDATE_BOOLEAN);
+        }
 
         $employee->update($data);
 
-        $new = $employee->only(['name', 'nik_ktp', 'phone', 'email', 'position', 'department', 'employment_status', 'join_date', 'resign_date']);
+        $new = $employee->only(['name', 'nik_ktp', 'phone', 'email', 'position', 'department', 'employment_status', 'join_date', 'resign_date', 'no_jmo', 'no_kpj', 'is_active']);
 
         $this->auditService->log(
             actor: $actor,

@@ -56,9 +56,42 @@
     </div>
 </div>
 
-<div class="mb-3">
-    <label class="form-label">Alamat (opsional)</label>
-    <input type="text" name="address" value="{{ old('address', $employee?->address) }}" class="form-control">
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Nomor JMO (BPJS Ketenagakerjaan)</label>
+        <input type="text" name="no_jmo" value="{{ old('no_jmo', $employee?->no_jmo) }}" class="form-control" placeholder="Nomor akun / ID JMO">
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Nomor KPJ (Kartu Peserta Jamsostek)</label>
+        <input type="text" name="no_kpj" value="{{ old('no_kpj', $employee?->no_kpj) }}" class="form-control" placeholder="Nomor KPJ">
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mb-3">
+        <label class="form-label">Alamat Lengkap (opsional)</label>
+        <textarea name="address" rows="2" class="form-control">{{ old('address', $employee?->address) }}</textarea>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label class="form-label">Foto 3x4 (opsional)</label>
+        @if ($employee?->photo_path)
+            <div class="mb-2">
+                <img src="{{ $employee->photoUrl() }}" alt="Foto 3x4" class="rounded border" style="width: 72px; height: 96px; object-fit: cover;">
+            </div>
+        @endif
+        <input type="file" name="photo" class="form-control form-control-sm" accept="image/*">
+        <div class="form-text">Format JPG/PNG/WEBP, rasio 3x4.</div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <label class="form-label">Status Karyawan</label>
+        <select name="is_active" class="form-select">
+            <option value="1" @selected(old('is_active', $employee?->is_active ?? true) == true)>Aktif</option>
+            <option value="0" @selected(old('is_active', $employee?->is_active ?? true) == false)>Nonaktif (Resign)</option>
+        </select>
+    </div>
 </div>
 
 <hr class="my-3">
