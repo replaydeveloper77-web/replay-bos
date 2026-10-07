@@ -23,19 +23,47 @@ class EmployeeController extends Controller
     {
         $this->authorize('viewAny', Employee::class);
 
-        $employees = Employee::with('user')
-            ->when($request->filled('q'), function ($query) use ($request) {
-                $search = '%'.$request->string('q').'%';
-                $query->where(fn ($q) => $q->where('name', 'like', $search)
-                    ->orWhere('employee_number', 'like', $search)
-                    ->orWhere('position', 'like', $search));
-            })
-            ->when($request->filled('department'), fn ($query) => $query->where('department', $request->string('department')))
-            ->orderBy('name')
-            ->paginate(20)
+        $query = Employee::with('user');
+
+        if ($request->filled('q')) {
+            $term = '%' . $request->string('q')->trim() . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', $term)
+                  ->orWhere('position', 'like', $term)
+                  ->orWhere('nik_ktp', 'like', $term)
+                  ->orWhere('email', 'like', $term)
+                  ->orWhere('no_jmo', 'like', $term)
+                  ->orWhere('no_kpj', 'like', $term)
+                  ->orWhere('employee_number', 'like', $term)
+                  ->orWhere('phone', 'like', $term)
+                  ->orWhere('address', 'like', $term);
+            });
+        }
+
+        if ($request->filled('department')) {
+            $query->where('department', $request->string('department'));
+        }
+
+        if ($request->filled('status')) {
+            if ($request->status === '1') {
+                $query->where('is_active', true);
+            } elseif ($request->status === '0') {
+                $query->where('is_active', false);
+            }
+        }
+
+        $employees = $query->orderBy('name')
+            ->paginate(15)
             ->withQueryString();
 
-        return view('employees.index', compact('employees'));
+        $currentUser = $request->user();
+        $canManage = $currentUser->hasRole('super-admin')
+            || $currentUser->hasRole('hr')
+            || $currentUser->can('create', Employee::class);
+
+        $users = $canManage ? User::where('is_active', true)->orderBy('name')->get() : collect();
+
+        return view('employees.index', compact('employees', 'canManage', 'users'));
     }
 
     public function show(Employee $employee)

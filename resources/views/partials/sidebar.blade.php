@@ -73,7 +73,7 @@
 
         @can('viewAny', \App\Models\Employee::class)
             <a class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}" href="{{ route('employees.index') }}">
-                <i class="bi bi-person-badge me-2"></i> Karyawan
+                <i class="bi bi-people me-2"></i> Data Karyawan
             </a>
         @endcan
 

@@ -3,21 +3,16 @@
 @section('title', 'Portal Karyawan')
 
 @section('content')
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h5 class="mb-0 fw-bold">Portal Karyawan</h5>
-            <small class="text-muted">Direktori dan Informasi Karyawan PT Replay Inti Media</small>
+            <small class="text-muted">Data Diri & Layanan Mandiri Karyawan</small>
         </div>
-        <div class="d-flex gap-2">
-            @if ($myEmployee)
-                <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#personalAttendanceCard" aria-expanded="false">
-                    <i class="bi bi-clock-history me-1"></i> Absensi & Cuti Saya
-                </button>
-            @endif
-            @if ($canManage)
-                <button type="button" class="btn btn-primary btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalTambahKaryawan">
-                    <i class="bi bi-person-plus-fill me-1"></i> + Tambah Data Karyawan
-                </button>
+        <div>
+            @if ($user->hasRole('super-admin') || $user->hasRole('hr'))
+                <a href="{{ route('employees.index') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-people me-1"></i> Buka Data Karyawan (Semua)
+                </a>
             @endif
         </div>
     </div>
@@ -29,552 +24,287 @@
         </div>
     @endif
 
-    @if (isset($errors) && $errors->any())
-        <div class="alert alert-danger alert-dismissible fade show mb-3 shadow-sm" role="alert">
-            <strong>Terjadi kesalahan:</strong>
-            <ul class="mb-0 mt-1">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    {{-- Widget Personal Absensi & Cuti (Jika akun ditautkan ke data karyawan) --}}
-    @if ($myEmployee)
-        <div class="collapse mb-3" id="personalAttendanceCard">
-            <div class="card border-primary-subtle shadow-sm bg-white">
-                <div class="card-header bg-primary text-white py-2 d-flex justify-content-between align-items-center">
-                    <span class="small fw-semibold"><i class="bi bi-person-badge me-1"></i> Profil Absensi Anda ({{ $myEmployee->name }})</span>
-                    <span class="small">{{ now()->translatedFormat('l, d F Y') }}</span>
+    @if (! $employee)
+        {{-- Kondisi Akun Belum Ditautkan ke Karyawan --}}
+        <div class="card border-0 shadow-sm p-4 text-center my-4" style="max-width: 600px; margin: 0 auto; border-radius: 12px;">
+            <div class="my-3">
+                <i class="bi bi-person-x text-muted" style="font-size: 3.5rem;"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Akun Belum Ditautkan ke Data Karyawan</h5>
+            <p class="text-muted small mb-4">
+                Akun login Anda (<strong>{{ $user->name }}</strong> / <code>{{ $user->username }}</code>) saat ini belum terhubung dengan master data karyawan mana pun di sistem.
+            </p>
+            @if ($user->hasRole('super-admin') || $user->hasRole('hr'))
+                <div>
+                    <a href="{{ route('employees.index') }}" class="btn btn-primary btn-sm px-3">
+                        <i class="bi bi-link-45deg me-1"></i> Tautkan Akun di Menu Data Karyawan
+                    </a>
                 </div>
-                <div class="card-body p-3">
-                    <div class="row g-3 align-items-center">
-                        <div class="col-md-6 border-end">
-                            <h6 class="text-muted small mb-2">Status Kehadiran Hari Ini:</h6>
+            @else
+                <div class="alert alert-light border small text-muted mb-0">
+                    Silakan hubungi bagian <strong>HR</strong> atau <strong>Super Admin</strong> untuk menautkan akun Anda ke data karyawan.
+                </div>
+            @endif
+        </div>
+    @else
+        {{-- KARTU PROFIL UTAMA DATA DIRI KARYAWAN --}}
+        <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden;">
+            <div class="p-4" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: #fff;">
+                <div class="d-flex flex-wrap align-items-center gap-4">
+                    <div class="position-relative">
+                        <img src="{{ $employee->photoUrl() }}" alt="{{ $employee->name }}" class="rounded shadow-sm border border-3 border-white bg-white" style="width: 105px; height: 140px; object-fit: cover;">
+                        @if ($employee->is_active)
+                            <span class="position-absolute bottom-0 end-0 badge bg-success border border-white rounded-pill px-2 py-1 shadow-xs" style="transform: translate(20%, 20%); font-size: 0.7rem;">
+                                <i class="bi bi-check-circle-fill"></i> Aktif
+                            </span>
+                        @else
+                            <span class="position-absolute bottom-0 end-0 badge bg-danger border border-white rounded-pill px-2 py-1 shadow-xs" style="transform: translate(20%, 20%); font-size: 0.7rem;">
+                                Nonaktif
+                            </span>
+                        @endif
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                            <h4 class="mb-0 fw-bold">{{ $employee->name }}</h4>
+                            <span class="badge bg-white text-primary fw-semibold px-2 py-1"><code>{{ $employee->employee_number }}</code></span>
+                        </div>
+                        <p class="mb-2 text-white-50 fs-6">
+                            {{ $employee->position ?: 'Staf' }} • Departemen {{ ucfirst(strtolower($employee->department)) }}
+                        </p>
+                        <div class="d-flex flex-wrap gap-3 small text-white-75">
+                            @if ($employee->email)
+                                <span><i class="bi bi-envelope me-1"></i> {{ $employee->email }}</span>
+                            @endif
+                            @if ($employee->phone)
+                                <span><i class="bi bi-whatsapp me-1"></i> {{ $employee->phone }}</span>
+                            @endif
+                            @if ($employee->join_date)
+                                <span><i class="bi bi-calendar-event me-1"></i> Masuk: {{ $employee->join_date->format('d/m/Y') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- DETAIL LENGKAP DATA DIRI --}}
+            <div class="card-body p-4 bg-white">
+                <div class="row g-4">
+                    {{-- Informasi Kepegawaian & Jamsostek --}}
+                    <div class="col-lg-6 border-end">
+                        <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                            <i class="bi bi-shield-check text-primary me-2"></i>Informasi Kepegawaian & BPJS
+                        </h6>
+                        <div class="row g-3 small">
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Nomor Induk Karyawan</span>
+                                <strong class="text-dark">{{ $employee->employee_number }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Jabatan</span>
+                                <strong class="text-dark">{{ $employee->position ?: '-' }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Departemen</span>
+                                <strong class="text-dark">{{ ucfirst(strtolower($employee->department)) }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Status Kepegawaian</span>
+                                <strong class="text-dark">{{ ucfirst(strtolower($employee->employment_status)) }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Nomor JMO (BPJS TK)</span>
+                                <strong class="text-primary fs-6">{{ $employee->no_jmo ?: '-' }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Nomor KPJ (Jamsostek)</span>
+                                <strong class="text-primary fs-6">{{ $employee->no_kpj ?: '-' }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Tahun / Tanggal Masuk</span>
+                                <strong class="text-dark">{{ $employee->join_date ? $employee->join_date->format('d F Y') : '-' }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Akhir Bekerja</span>
+                                <strong class="text-dark">{{ $employee->resign_date ? $employee->resign_date->format('d F Y') : ($employee->contract_end_date ? $employee->contract_end_date->format('d F Y') : '-') }}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Data Identitas Diri --}}
+                    <div class="col-lg-6">
+                        <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                            <i class="bi bi-person-lines-fill text-primary me-2"></i>Data Identitas Pribadi
+                        </h6>
+                        <div class="row g-3 small">
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">NIK KTP</span>
+                                <strong class="text-dark">{{ $employee->nik_ktp ?: '-' }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Jenis Kelamin</span>
+                                <strong class="text-dark">{{ $employee->gender === 'L' ? 'Laki-laki' : ($employee->gender === 'P' ? 'Perempuan' : '-') }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Tempat, Tanggal Lahir</span>
+                                <strong class="text-dark">{{ $employee->birth_place ?: '-' }}@if($employee->birth_date), {{ $employee->birth_date->format('d/m/Y') }}@endif</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted d-block">Nomor Telepon / WA</span>
+                                <strong class="text-dark">{{ $employee->phone ?: '-' }}</strong>
+                            </div>
+                            <div class="col-12">
+                                <span class="text-muted d-block">Email</span>
+                                <strong class="text-dark">{{ $employee->email ?: '-' }}</strong>
+                            </div>
+                            <div class="col-12">
+                                <span class="text-muted d-block">Alamat Tempat Tinggal</span>
+                                <div class="text-dark">{{ $employee->address ?: '-' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- WIDGET LAYANAN MANDIRI: ABSENSI & CUTI PRIBADI --}}
+        <div class="row g-3">
+            {{-- Absensi Hari Ini --}}
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm p-4 bg-white h-100" style="border-radius: 12px;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0"><i class="bi bi-clock text-success me-2"></i>Absensi Hari Ini</h6>
+                        <span class="badge bg-light text-muted border">{{ now()->translatedFormat('l, d F Y') }}</span>
+                    </div>
+
+                    <div class="bg-light p-3 rounded mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small text-muted">Status Check-in:</span>
                             @if ($today && $today->isCheckedIn())
-                                <p class="mb-1 text-success fw-bold"><i class="bi bi-check2-circle"></i> Check-in: {{ $today->check_in_at->format('H:i') }}</p>
+                                <span class="badge bg-success"><i class="bi bi-check2"></i> {{ $today->check_in_at->format('H:i') }} WIB</span>
                             @else
-                                <p class="mb-1 text-danger small"><i class="bi bi-x-circle"></i> Belum check-in hari ini</p>
+                                <span class="badge bg-secondary">Belum Check-in</span>
                             @endif
-
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small text-muted">Status Check-out:</span>
                             @if ($today && $today->isCheckedOut())
-                                <p class="mb-2 text-danger fw-bold"><i class="bi bi-box-arrow-right"></i> Check-out: {{ $today->check_out_at->format('H:i') }}</p>
-                            @endif
-
-                            @if (! $today || ! $today->isCheckedIn())
-                                <form method="POST" action="{{ route('attendance.check-in') }}" class="mt-2">
-                                    @csrf
-                                    <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-box-arrow-in-right"></i> Check-in Sekarang</button>
-                                </form>
-                            @elseif (! $today->isCheckedOut())
-                                <form method="POST" action="{{ route('attendance.check-out') }}" class="mt-2">
-                                    @csrf
-                                    <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-box-arrow-right"></i> Check-out Sekarang</button>
-                                </form>
-                            @endif
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="text-muted small mb-0">Pengajuan Cuti / Izin:</h6>
-                                <a href="{{ route('leave-requests.self') }}" class="btn btn-outline-primary btn-sm py-0">Ajukan</a>
-                            </div>
-                            @if ($myEmployee->employment_status === 'TETAP' && $leaveQuota)
-                                <p class="small text-muted mb-0">
-                                    Sisa Cuti: <strong class="text-success">{{ $leaveQuota['remaining'] }} hari</strong> (Terpakai: {{ $leaveQuota['used'] }} dari {{ $leaveQuota['quota'] }} hari)
-                                </p>
+                                <span class="badge bg-danger"><i class="bi bi-box-arrow-right"></i> {{ $today->check_out_at->format('H:i') }} WIB</span>
+                            @else
+                                <span class="badge bg-secondary">Belum Check-out</span>
                             @endif
                         </div>
                     </div>
+
+                    @if (! $today || ! $today->isCheckedIn())
+                        <form method="POST" action="{{ route('attendance.check-in') }}" id="portal-checkin-form">
+                            @csrf
+                            <input type="hidden" name="lat" id="checkin-lat">
+                            <input type="hidden" name="lng" id="checkin-lng">
+                            <div class="mb-2">
+                                <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Catatan kerja (opsional, misal WFH / Dinas Lapangan)"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bi bi-box-arrow-in-right me-1"></i> Check-in Sekarang
+                            </button>
+                        </form>
+                    @elseif (! $today->isCheckedOut())
+                        <form method="POST" action="{{ route('attendance.check-out') }}" id="portal-checkout-form">
+                            @csrf
+                            <input type="hidden" name="lat" id="checkout-lat">
+                            <input type="hidden" name="lng" id="checkout-lng">
+                            <div class="mb-2">
+                                <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Catatan penutup (opsional)"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-danger w-100">
+                                <i class="bi bi-box-arrow-right me-1"></i> Check-out Sekarang
+                            </button>
+                        </form>
+                    @else
+                        <div class="alert alert-success small mb-0 text-center">
+                            <i class="bi bi-check-circle-fill me-1"></i> Absensi hari ini sudah lengkap. Terima kasih atas kerja keras Anda!
+                        </div>
+                    @endif
+
+                    @if ($attendanceHistory->isNotEmpty())
+                        <div class="mt-4 pt-3 border-top">
+                            <h6 class="small fw-semibold text-muted mb-2">Riwayat Absensi 7 Hari Terakhir:</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-borderless small mb-0">
+                                    <tbody>
+                                        @foreach ($attendanceHistory as $att)
+                                            <tr>
+                                                <td class="text-muted">{{ $att->date->format('d/m/Y') }}</td>
+                                                <td><span class="text-success"><i class="bi bi-arrow-down-right"></i> {{ $att->check_in_at ? $att->check_in_at->format('H:i') : '-' }}</span></td>
+                                                <td><span class="text-danger"><i class="bi bi-arrow-up-right"></i> {{ $att->check_out_at ? $att->check_out_at->format('H:i') : '-' }}</span></td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
-        </div>
-    @endif
 
-    {{-- KOTAK PENCARIAN (Sesuai Desain Mockup) --}}
-    <div class="card mb-4 border-0 shadow-sm" style="border-radius: 8px; overflow: hidden;">
-        <div class="bg-secondary bg-opacity-25 py-2 px-3 text-center border-bottom">
-            <h6 class="mb-0 fw-bold text-dark tracking-wide" style="letter-spacing: 2px;">PENCARIAN</h6>
-        </div>
-        <div class="card-body p-3 bg-white">
-            <form method="GET" action="{{ route('portal-karyawan.index') }}">
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-5">
-                        <label class="form-label small text-muted mb-1 fw-semibold">Kata Kunci Pencarian</label>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-                            <input type="text" name="q" value="{{ request('q') }}" class="form-control border-start-0" placeholder="Cari Nama, Jabatan, NIK, Email, No. JMO, No. KPJ...">
-                        </div>
+            {{-- Kuota Cuti & Pengajuan Cuti Pribadi --}}
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm p-4 bg-white h-100" style="border-radius: 12px;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0"><i class="bi bi-calendar-check text-primary me-2"></i>Cuti & Izin</h6>
+                        <a href="{{ route('leave-requests.self') }}" class="btn btn-primary btn-sm py-1 px-3">
+                            <i class="bi bi-plus-lg me-1"></i> Ajukan Cuti/Izin
+                        </a>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label small text-muted mb-1 fw-semibold">Departemen</label>
-                        <select name="department" class="form-select form-select-sm">
-                            <option value="">-- Semua Departemen --</option>
-                            @foreach (\App\Models\Employee::DEPARTMENTS as $dept)
-                                <option value="{{ $dept }}" @selected(request('department') === $dept)>{{ ucfirst(strtolower($dept)) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small text-muted mb-1 fw-semibold">Status</label>
-                        <select name="status" class="form-select form-select-sm">
-                            <option value="">-- Semua Status --</option>
-                            <option value="1" @selected(request('status') === '1')>Aktif</option>
-                            <option value="0" @selected(request('status') === '0')>Nonaktif (Resign)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2 d-flex gap-1">
-                        <button type="submit" class="btn btn-primary btn-sm flex-fill">
-                            <i class="bi bi-search"></i> Cari
-                        </button>
-                        @if (request()->hasAny(['q', 'department', 'status']))
-                            <a href="{{ route('portal-karyawan.index') }}" class="btn btn-outline-secondary btn-sm" title="Reset filter">
-                                <i class="bi bi-x-lg"></i>
-                            </a>
-                        @endif
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    {{-- TABEL DATA KARYAWAN (Sesuai Kolom Mockup) --}}
-    <div class="card border-0 shadow-sm" style="border-radius: 8px; overflow: hidden;">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0" style="border: 1px solid #d1d5db;">
-                <thead style="background-color: #e5e7eb; color: #111827; border-bottom: 2px solid #9ca3af;">
-                    <tr class="text-uppercase fw-bold text-nowrap" style="font-size: 0.85rem; letter-spacing: 0.5px;">
-                        <th style="width: 50px; text-align: center; border-right: 1px solid #d1d5db;">NO.</th>
-                        <th style="border-right: 1px solid #d1d5db;">NAMA</th>
-                        <th style="border-right: 1px solid #d1d5db;">JABATAN</th>
-                        <th style="border-right: 1px solid #d1d5db;">NIK</th>
-                        <th style="border-right: 1px solid #d1d5db;">EMAIL</th>
-                        <th style="border-right: 1px solid #d1d5db;">NO. JMO</th>
-                        <th style="border-right: 1px solid #d1d5db;">NO. KPJ</th>
-                        <th style="width: 90px; text-align: center; border-right: 1px solid #d1d5db;">STATUS</th>
-                        <th style="width: 120px; text-align: center;">AKSI</th>
-                    </tr>
-                </thead>
-                <tbody style="font-size: 0.9rem;">
-                    @forelse ($employees as $index => $item)
-                        <tr style="border-bottom: 1px solid #e5e7eb;">
-                            <td class="text-center fw-semibold text-muted" style="border-right: 1px solid #e5e7eb;">
-                                {{ $employees->firstItem() + $index }}
-                            </td>
-                            <td style="border-right: 1px solid #e5e7eb;">
-                                <div class="d-flex align-items-center gap-2">
-                                    <img src="{{ $item->photoUrl() }}" alt="{{ $item->name }}" class="rounded shadow-xs border" style="width: 34px; height: 44px; object-fit: cover; flex-shrink: 0;">
-                                    <div>
-                                        <a href="javascript:void(0)" class="fw-bold text-dark text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalDetail{{ $item->id }}">
-                                            {{ $item->name }}
-                                        </a>
-                                        <div class="small text-muted" style="font-size: 0.75rem;">
-                                            <code>{{ $item->employee_number }}</code>
-                                            @if($item->phone) • <i class="bi bi-whatsapp text-success"></i> {{ $item->phone }} @endif
-                                        </div>
-                                    </div>
+                    @if ($employee->employment_status === 'TETAP' && $leaveQuota)
+                        <div class="bg-light p-3 rounded mb-3">
+                            <div class="small fw-semibold text-muted mb-2">Kuota Cuti Tahunan {{ now()->year }}:</div>
+                            <div class="d-flex justify-content-between align-items-center text-center">
+                                <div>
+                                    <div class="fs-4 fw-bold text-dark">{{ $leaveQuota['quota'] }}</div>
+                                    <small class="text-muted">Total Hak</small>
                                 </div>
-                            </td>
-                            <td style="border-right: 1px solid #e5e7eb;">
-                                <span class="fw-medium text-dark">{{ $item->position ?: '-' }}</span>
-                                <small class="text-muted d-block" style="font-size: 0.75rem;">{{ ucfirst(strtolower($item->department)) }}</small>
-                            </td>
-                            <td style="border-right: 1px solid #e5e7eb;" class="font-monospace">
-                                {{ $item->nik_ktp ?: '-' }}
-                            </td>
-                            <td style="border-right: 1px solid #e5e7eb;">
-                                @if ($item->email)
-                                    <a href="mailto:{{ $item->email }}" class="text-decoration-none text-primary">{{ $item->email }}</a>
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
-                            </td>
-                            <td style="border-right: 1px solid #e5e7eb;" class="font-monospace text-secondary">
-                                {{ $item->no_jmo ?: '-' }}
-                            </td>
-                            <td style="border-right: 1px solid #e5e7eb;" class="font-monospace text-secondary">
-                                {{ $item->no_kpj ?: '-' }}
-                            </td>
-                            <td class="text-center" style="border-right: 1px solid #e5e7eb;">
-                                @if ($item->is_active)
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Aktif</span>
-                                @else
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Nonaktif</span>
-                                @endif
-                            </td>
-                            <td class="text-center">
-                                <div class="d-flex justify-content-center gap-1">
-                                    <button type="button" class="btn btn-sm btn-outline-info py-0 px-2" title="Lihat Detail Profil" data-bs-toggle="modal" data-bs-target="#modalDetail{{ $item->id }}">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    @if ($canManage)
-                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" title="Edit Data Karyawan" data-bs-toggle="modal" data-bs-target="#modalEdit{{ $item->id }}">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        @if ($item->is_active)
-                                            <form method="POST" action="{{ route('employees.disable', $item) }}" class="d-inline" onsubmit="return confirm('Nonaktifkan status karyawan {{ $item->name }}?')">
-                                                @csrf
-                                                <input type="hidden" name="redirect_to" value="{{ route('portal-karyawan.index') }}">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" title="Tandai Nonaktif">
-                                                    <i class="bi bi-person-x"></i>
-                                                </button>
-                                            </form>
-                                        @else
-                                            <form method="POST" action="{{ route('employees.enable', $item) }}" class="d-inline">
-                                                @csrf
-                                                <input type="hidden" name="redirect_to" value="{{ route('portal-karyawan.index') }}">
-                                                <button type="submit" class="btn btn-sm btn-outline-success py-0 px-2" title="Aktifkan Kembali">
-                                                    <i class="bi bi-person-check"></i>
-                                                </button>
-                                            </form>
-                                        @endif
-                                    @endif
+                                <div class="border-start ps-3">
+                                    <div class="fs-4 fw-bold text-danger">{{ $leaveQuota['used'] }}</div>
+                                    <small class="text-muted">Terpakai</small>
                                 </div>
-                            </td>
-                        </tr>
-
-                        {{-- MODAL DETAIL KARYAWAN --}}
-                        <div class="modal fade" id="modalDetail{{ $item->id }}" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered modal-lg">
-                                <div class="modal-content">
-                                    <div class="modal-header bg-light">
-                                        <h6 class="modal-title fw-bold"><i class="bi bi-person-badge me-2 text-primary"></i>Detail Karyawan — {{ $item->name }}</h6>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body p-4">
-                                        <div class="row g-4">
-                                            <div class="col-md-4 text-center border-end">
-                                                <img src="{{ $item->photoUrl() }}" alt="{{ $item->name }}" class="rounded shadow border mb-3" style="width: 140px; height: 186px; object-fit: cover;">
-                                                <h6 class="fw-bold mb-1">{{ $item->name }}</h6>
-                                                <span class="badge bg-primary mb-2">{{ $item->position ?: 'Staf' }}</span>
-                                                <div><code>{{ $item->employee_number }}</code></div>
-                                                <div class="mt-2">
-                                                    @if ($item->is_active)
-                                                        <span class="badge bg-success">Status: Aktif</span>
-                                                    @else
-                                                        <span class="badge bg-danger">Status: Nonaktif (Resign)</span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                            <div class="col-md-8">
-                                                <div class="row g-3 small">
-                                                    <div class="col-6">
-                                                        <span class="text-muted d-block">NIK KTP</span>
-                                                        <strong>{{ $item->nik_ktp ?: '-' }}</strong>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <span class="text-muted d-block">Departemen</span>
-                                                        <strong>{{ ucfirst(strtolower($item->department)) }}</strong>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <span class="text-muted d-block">Nomor HP / WA</span>
-                                                        <strong>{{ $item->phone ?: '-' }}</strong>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <span class="text-muted d-block">Email</span>
-                                                        <strong>{{ $item->email ?: '-' }}</strong>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <span class="text-muted d-block">Nomor JMO (BPJS TK)</span>
-                                                        <strong class="text-primary">{{ $item->no_jmo ?: '-' }}</strong>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <span class="text-muted d-block">Nomor KPJ (Jamsostek)</span>
-                                                        <strong class="text-primary">{{ $item->no_kpj ?: '-' }}</strong>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <span class="text-muted d-block">Tahun / Tanggal Masuk</span>
-                                                        <strong>{{ $item->join_date ? $item->join_date->format('d/m/Y') : '-' }}</strong>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <span class="text-muted d-block">Akhir Bekerja (Resign)</span>
-                                                        <strong>{{ $item->resign_date ? $item->resign_date->format('d/m/Y') : '-' }}</strong>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <span class="text-muted d-block">Status Kepegawaian</span>
-                                                        <strong>{{ ucfirst(strtolower($item->employment_status)) }}</strong>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <span class="text-muted d-block">Jenis Kelamin</span>
-                                                        <strong>{{ $item->gender === 'L' ? 'Laki-laki' : ($item->gender === 'P' ? 'Perempuan' : '-') }}</strong>
-                                                    </div>
-                                                    <div class="col-12">
-                                                        <span class="text-muted d-block">Alamat Lengkap</span>
-                                                        <div>{{ $item->address ?: '-' }}</div>
-                                                    </div>
-                                                    @if($item->notes)
-                                                        <div class="col-12">
-                                                            <span class="text-muted d-block">Catatan</span>
-                                                            <div class="text-muted">{{ $item->notes }}</div>
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer py-2 bg-light">
-                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
-                                        @if ($canManage)
-                                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#modalEdit{{ $item->id }}">
-                                                <i class="bi bi-pencil me-1"></i> Edit Karyawan
-                                            </button>
-                                        @endif
-                                    </div>
+                                <div class="border-start ps-3">
+                                    <div class="fs-4 fw-bold text-success">{{ $leaveQuota['remaining'] }}</div>
+                                    <small class="text-muted">Sisa Kuota</small>
                                 </div>
                             </div>
                         </div>
+                    @endif
 
-                        {{-- MODAL EDIT KARYAWAN (Hanya untuk Superadmin & HR) --}}
-                        @if ($canManage)
-                            <div class="modal fade" id="modalEdit{{ $item->id }}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered modal-lg">
-                                    <div class="modal-content">
-                                        <form method="POST" action="{{ route('employees.update', $item) }}" enctype="multipart/form-data">
-                                            @csrf
-                                            @method('PUT')
-                                            <input type="hidden" name="redirect_to" value="{{ route('portal-karyawan.index') }}">
-                                            <div class="modal-header bg-primary text-white">
-                                                <h6 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Edit Data Karyawan — {{ $item->name }}</h6>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body p-4">
-                                                <div class="row g-3">
-                                                    {{-- Foto 3x4 & Pratinjau --}}
-                                                    <div class="col-12 d-flex align-items-center gap-3 p-3 bg-light rounded border">
-                                                        <img src="{{ $item->photoUrl() }}" id="previewFotoEdit{{ $item->id }}" alt="Foto 3x4" class="rounded border shadow-xs" style="width: 60px; height: 80px; object-fit: cover;">
-                                                        <div class="flex-grow-1">
-                                                            <label class="form-label fw-semibold small mb-1">Ganti Foto 3x4 (Opsional)</label>
-                                                            <input type="file" name="photo" class="form-control form-control-sm" accept="image/*" onchange="previewImage(this, 'previewFotoEdit{{ $item->id }}')">
-                                                            <div class="form-text" style="font-size: 0.75rem;">Format JPG/PNG/WEBP, rasio foto 3x4 (maks. 5MB).</div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="col-md-6">
-                                                        <label class="form-label small fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
-                                                        <input type="text" name="name" value="{{ old('name', $item->name) }}" class="form-control form-control-sm" required>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label small fw-semibold">Jabatan <span class="text-danger">*</span></label>
-                                                        <input type="text" name="position" value="{{ old('position', $item->position) }}" class="form-control form-control-sm" placeholder="Contoh: Teknisi Lapangan, HR Specialist, dsb." required>
-                                                    </div>
-
-                                                    <div class="col-md-6">
-                                                        <label class="form-label small fw-semibold">NIK (KTP)</label>
-                                                        <input type="text" name="nik_ktp" value="{{ old('nik_ktp', $item->nik_ktp) }}" class="form-control form-control-sm" placeholder="16 digit NIK KTP">
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label small fw-semibold">Email</label>
-                                                        <input type="email" name="email" value="{{ old('email', $item->email) }}" class="form-control form-control-sm" placeholder="nama@replay.net.id">
-                                                    </div>
-
-                                                    <div class="col-md-6">
-                                                        <label class="form-label small fw-semibold">Nomor JMO (BPJS TK)</label>
-                                                        <input type="text" name="no_jmo" value="{{ old('no_jmo', $item->no_jmo) }}" class="form-control form-control-sm" placeholder="Nomor akun / ID JMO">
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label small fw-semibold">Nomor KPJ (Jamsostek)</label>
-                                                        <input type="text" name="no_kpj" value="{{ old('no_kpj', $item->no_kpj) }}" class="form-control form-control-sm" placeholder="Nomor KPJ">
-                                                    </div>
-
-                                                    <div class="col-md-6">
-                                                        <label class="form-label small fw-semibold">Nomor HP / WhatsApp</label>
-                                                        <input type="text" name="phone" value="{{ old('phone', $item->phone) }}" class="form-control form-control-sm" placeholder="08xxxxxxxxxx">
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label small fw-semibold">Departemen</label>
-                                                        <select name="department" class="form-select form-select-sm">
-                                                            @foreach (\App\Models\Employee::DEPARTMENTS as $dept)
-                                                                <option value="{{ $dept }}" @selected(old('department', $item->department) === $dept)>{{ ucfirst(strtolower($dept)) }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-
-                                                    <div class="col-md-6">
-                                                        <label class="form-label small fw-semibold">Tahun / Tanggal Masuk</label>
-                                                        <input type="date" name="join_date" value="{{ old('join_date', $item->join_date?->format('Y-m-d')) }}" class="form-control form-control-sm">
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label small fw-semibold">Akhir Bekerja (Resign)</label>
-                                                        <input type="date" name="resign_date" value="{{ old('resign_date', $item->resign_date?->format('Y-m-d')) }}" class="form-control form-control-sm">
-                                                    </div>
-
-                                                    <div class="col-md-6">
-                                                        <label class="form-label small fw-semibold">Status Karyawan <span class="text-danger">*</span></label>
-                                                        <select name="is_active" class="form-select form-select-sm">
-                                                            <option value="1" @selected(old('is_active', $item->is_active) == true)>Aktif</option>
-                                                            <option value="0" @selected(old('is_active', $item->is_active) == false)>Nonaktif (Resign)</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label small fw-semibold">Status Kepegawaian</label>
-                                                        <select name="employment_status" class="form-select form-select-sm">
-                                                            @foreach (\App\Models\Employee::EMPLOYMENT_STATUSES as $estatus)
-                                                                <option value="{{ $estatus }}" @selected(old('employment_status', $item->employment_status) === $estatus)>{{ ucfirst(strtolower($estatus)) }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-
-                                                    <div class="col-12">
-                                                        <label class="form-label small fw-semibold">Alamat Lengkap</label>
-                                                        <textarea name="address" rows="2" class="form-control form-control-sm" placeholder="Alamat domisili / tempat tinggal">{{ old('address', $item->address) }}</textarea>
-                                                    </div>
-
-                                                    <div class="col-12">
-                                                        <label class="form-label small fw-semibold">Akun Login Terkait (Opsional)</label>
-                                                        <select name="user_id" class="form-select form-select-sm">
-                                                            <option value="">-- Tidak ditautkan ke akun login --</option>
-                                                            @foreach ($users as $u)
-                                                                <option value="{{ $u->id }}" @selected(old('user_id', $item->user_id) == $u->id)>{{ $u->name }} ({{ $u->username }})</option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer py-2 bg-light">
-                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                                                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-save me-1"></i> Simpan Perubahan</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
-                    @empty
-                        <tr>
-                            <td colspan="9" class="text-center py-5 text-muted">
-                                <i class="bi bi-people text-secondary fs-1 d-block mb-2"></i>
-                                Belum ada data karyawan yang ditemukan.
-                                @if ($canManage)
-                                    <div class="mt-2">
-                                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahKaryawan">
-                                            <i class="bi bi-person-plus-fill me-1"></i> Tambah Karyawan Pertama
-                                        </button>
-                                    </div>
-                                @endif
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        @if ($employees->hasPages())
-            <div class="card-footer bg-white border-top-0 py-3">
-                {{ $employees->links() }}
-            </div>
-        @endif
-    </div>
-
-    {{-- MODAL TAMBAH DATA KARYAWAN (Hanya untuk Superadmin & HR) --}}
-    @if ($canManage)
-        <div class="modal fade" id="modalTambahKaryawan" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content">
-                    <form method="POST" action="{{ route('employees.store') }}" enctype="multipart/form-data">
-                        @csrf
-                        <input type="hidden" name="redirect_to" value="{{ route('portal-karyawan.index') }}">
-                        <div class="modal-header bg-primary text-white">
-                            <h6 class="modal-title fw-bold"><i class="bi bi-person-plus-fill me-2"></i>Tambah Data Karyawan</h6>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <h6 class="small fw-semibold text-muted mb-2">Pengajuan Cuti/Izin Terakhir:</h6>
+                    @if ($leaveRequests->isEmpty())
+                        <p class="text-muted small py-3 text-center mb-0">Belum ada riwayat pengajuan cuti/izin.</p>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0 small">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Jenis</th>
+                                        <th>Periode</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($leaveRequests as $lr)
+                                        <tr>
+                                            <td><strong>{{ $lr->typeLabel() }}</strong></td>
+                                            <td class="text-nowrap">{{ $lr->start_date->format('d/m') }} - {{ $lr->end_date->format('d/m/Y') }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ $lr->status === 'APPROVED' ? 'success' : ($lr->status === 'REJECTED' ? 'danger' : ($lr->status === 'CANCELLED' ? 'secondary' : 'warning text-dark')) }}">
+                                                    {{ $lr->statusLabel() }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="modal-body p-4">
-                            <div class="row g-3">
-                                {{-- Upload Foto 3x4 --}}
-                                <div class="col-12 d-flex align-items-center gap-3 p-3 bg-light rounded border">
-                                    <img src="https://ui-avatars.com/api/?name=Foto+3x4&color=4F46E5&background=EEF2FF&size=128" id="previewFotoTambah" alt="Foto 3x4" class="rounded border shadow-xs" style="width: 60px; height: 80px; object-fit: cover;">
-                                    <div class="flex-grow-1">
-                                        <label class="form-label fw-semibold small mb-1">Unggah Foto 3x4 (Opsional)</label>
-                                        <input type="file" name="photo" class="form-control form-control-sm" accept="image/*" onchange="previewImage(this, 'previewFotoTambah')">
-                                        <div class="form-text" style="font-size: 0.75rem;">Format JPG/PNG/WEBP, rasio foto 3x4 (maks. 5MB).</div>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
-                                    <input type="text" name="name" value="{{ old('name') }}" class="form-control form-control-sm" placeholder="Nama lengkap karyawan" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Jabatan <span class="text-danger">*</span></label>
-                                    <input type="text" name="position" value="{{ old('position') }}" class="form-control form-control-sm" placeholder="Contoh: Teknisi Lapangan, HR, NOC, dsb." required>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">NIK (KTP)</label>
-                                    <input type="text" name="nik_ktp" value="{{ old('nik_ktp') }}" class="form-control form-control-sm" placeholder="16 digit NIK KTP">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Email</label>
-                                    <input type="email" name="email" value="{{ old('email') }}" class="form-control form-control-sm" placeholder="nama@replay.net.id">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Nomor JMO (BPJS TK)</label>
-                                    <input type="text" name="no_jmo" value="{{ old('no_jmo') }}" class="form-control form-control-sm" placeholder="Nomor akun / ID JMO">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Nomor KPJ (Jamsostek)</label>
-                                    <input type="text" name="no_kpj" value="{{ old('no_kpj') }}" class="form-control form-control-sm" placeholder="Nomor KPJ">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Nomor HP / WhatsApp</label>
-                                    <input type="text" name="phone" value="{{ old('phone') }}" class="form-control form-control-sm" placeholder="08xxxxxxxxxx">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Departemen</label>
-                                    <select name="department" class="form-select form-select-sm">
-                                        @foreach (\App\Models\Employee::DEPARTMENTS as $dept)
-                                            <option value="{{ $dept }}" @selected(old('department', 'OTHER') === $dept)>{{ ucfirst(strtolower($dept)) }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Tahun / Tanggal Masuk</label>
-                                    <input type="date" name="join_date" value="{{ old('join_date', now()->toDateString()) }}" class="form-control form-control-sm">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Akhir Bekerja (Resign)</label>
-                                    <input type="date" name="resign_date" value="{{ old('resign_date') }}" class="form-control form-control-sm">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Status Karyawan <span class="text-danger">*</span></label>
-                                    <select name="is_active" class="form-select form-select-sm">
-                                        <option value="1" @selected(old('is_active', '1') == '1')>Aktif</option>
-                                        <option value="0" @selected(old('is_active') == '0')>Nonaktif (Resign)</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Status Kepegawaian</label>
-                                    <select name="employment_status" class="form-select form-select-sm">
-                                        @foreach (\App\Models\Employee::EMPLOYMENT_STATUSES as $estatus)
-                                            <option value="{{ $estatus }}" @selected(old('employment_status', 'TETAP') === $estatus)>{{ ucfirst(strtolower($estatus)) }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-12">
-                                    <label class="form-label small fw-semibold">Alamat Lengkap</label>
-                                    <textarea name="address" rows="2" class="form-control form-control-sm" placeholder="Alamat domisili / tempat tinggal">{{ old('address') }}</textarea>
-                                </div>
-
-                                <div class="col-12">
-                                    <label class="form-label small fw-semibold">Tautkan ke Akun Login (Opsional)</label>
-                                    <select name="user_id" class="form-select form-select-sm">
-                                        <option value="">-- Tidak ditautkan ke akun login --</option>
-                                        @foreach ($users as $u)
-                                            <option value="{{ $u->id }}" @selected(old('user_id') == $u->id)>{{ $u->name }} ({{ $u->username }})</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer py-2 bg-light">
-                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg me-1"></i> Simpan Data Karyawan</button>
-                        </div>
-                    </form>
+                    @endif
                 </div>
             </div>
         </div>
@@ -583,15 +313,25 @@
 
 @push('scripts')
 <script>
-    function previewImage(input, previewId) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.getElementById(previewId);
-                if (img) img.src = e.target.result;
-            }
-            reader.readAsDataURL(input.files[0]);
+    (function () {
+        if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                function (pos) {
+                    const latInp = document.getElementById('checkin-lat');
+                    const lngInp = document.getElementById('checkin-lng');
+                    const outLat = document.getElementById('checkout-lat');
+                    const outLng = document.getElementById('checkout-lng');
+                    if (latInp) latInp.value = pos.coords.latitude;
+                    if (lngInp) lngInp.value = pos.coords.longitude;
+                    if (outLat) outLat.value = pos.coords.latitude;
+                    if (outLng) outLng.value = pos.coords.longitude;
+                },
+                function (err) {
+                    // Lokasi opsional
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
         }
-    }
+    })();
 </script>
 @endpush
