@@ -136,6 +136,10 @@
                     return 'Rp ' + (Math.round(n) || 0).toLocaleString('id-ID');
                 };
 
+                var formatNominal = function (n) {
+                    return (Math.round(parseFloat(n) || 0)).toLocaleString('id-ID');
+                };
+
                 // ---- Coverage map ----
                 var startLat = parseFloat(document.getElementById('latitude').value) || -6.9808;
                 var startLng = parseFloat(document.getElementById('longitude').value) || 108.4834;
@@ -208,18 +212,23 @@
                 function addRow(data) {
                     data = data || {};
                     var idx = itemIndex++;
+                    var rawPrice = parseFloat(data.unit_price) || 0;
                     var tr = document.createElement('tr');
                     tr.innerHTML =
                         '<td><select class="form-select form-select-sm pkg-select">' + packageOptions(data.service_package_id) + '</select></td>' +
                         '<td><input type="text" class="form-control form-control-sm item-name" name="items[' + idx + '][item_name]" value="' + (data.item_name ? data.item_name.replace(/"/g, '&quot;') : '') + '" required></td>' +
                         '<td><input type="number" min="1" class="form-control form-control-sm item-qty" name="items[' + idx + '][qty]" value="' + (data.qty || 1) + '" required></td>' +
-                        '<td><input type="number" step="0.01" min="0" class="form-control form-control-sm item-price" name="items[' + idx + '][unit_price]" value="' + (data.unit_price || 0) + '" required></td>' +
+                        '<td>' +
+                            '<input type="text" class="form-control form-control-sm bg-light item-price-display" value="' + formatNominal(rawPrice) + '" readonly tabindex="-1" style="cursor: not-allowed; font-weight: 500;" title="Harga satuan terisi otomatis dari paket layanan">' +
+                            '<input type="hidden" class="item-price" name="items[' + idx + '][unit_price]" value="' + rawPrice + '">' +
+                        '</td>' +
                         '<td class="row-subtotal text-end">Rp 0</td>' +
                         '<td><button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="bi bi-trash"></i></button></td>';
 
                     var pkgSelect = tr.querySelector('.pkg-select');
                     var nameInput = tr.querySelector('.item-name');
                     var priceInput = tr.querySelector('.item-price');
+                    var priceDisplay = tr.querySelector('.item-price-display');
                     var hiddenPkgId = document.createElement('input');
                     hiddenPkgId.type = 'hidden';
                     hiddenPkgId.name = 'items[' + idx + '][service_package_id]';
@@ -231,7 +240,13 @@
                         hiddenPkgId.value = pkgSelect.value;
                         if (pkgSelect.value) {
                             nameInput.value = opt.getAttribute('data-name');
-                            priceInput.value = opt.getAttribute('data-price');
+                            var p = parseFloat(opt.getAttribute('data-price')) || 0;
+                            priceInput.value = p;
+                            priceDisplay.value = formatNominal(p);
+                            recalc();
+                        } else {
+                            priceInput.value = 0;
+                            priceDisplay.value = '0';
                             recalc();
                         }
                     });
@@ -242,7 +257,6 @@
                     });
 
                     tr.querySelector('.item-qty').addEventListener('input', recalc);
-                    priceInput.addEventListener('input', recalc);
 
                     tbody.appendChild(tr);
                     recalc();

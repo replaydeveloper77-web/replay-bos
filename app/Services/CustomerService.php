@@ -137,13 +137,13 @@ class CustomerService
         });
     }
 
-    private function generateServiceNumber(string $category = 'HOME'): string
+    public function generateServiceNumber(string $category = 'HOME'): string
     {
         return DB::transaction(function () use ($category) {
             $prefix = match (strtoupper($category)) {
-                'RESELLER' => 'RS-',
-                'CORPORATE' => 'CP-',
-                default => 'PLG-',
+                'RESELLER' => Customer::SERVICE_PREFIX_RESELLER,
+                'CORPORATE' => Customer::SERVICE_PREFIX_CORPORATE,
+                default => Customer::SERVICE_PREFIX_HOME,
             };
 
             // Based on the highest number already issued with this prefix, not a row count —
@@ -158,7 +158,7 @@ class CustomerService
                 $nextSeq = ((int) $matches[1]) + 1;
             }
 
-            return $prefix.str_pad((string) $nextSeq, 5, '0', STR_PAD_LEFT);
+            return $prefix . $nextSeq;
         });
     }
 }

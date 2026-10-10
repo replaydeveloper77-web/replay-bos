@@ -7,12 +7,14 @@ use App\Http\Requests\AssignTicketRequest;
 use App\Http\Requests\ChangeTicketStatusRequest;
 use App\Http\Requests\SendWhatsAppMessageRequest;
 use App\Http\Requests\StoreTicketAttachmentRequest;
+use App\Http\Requests\StoreTicketProgressUpdateRequest;
 use App\Http\Requests\StoreTicketRequest;
 use App\Http\Requests\UpdateTicketRequest;
 use App\Models\Customer;
 use App\Models\Team;
 use App\Models\Ticket;
 use App\Models\TicketAttachment;
+use App\Models\TicketProgressUpdate;
 use App\Models\TicketTitle;
 use App\Models\User;
 use App\Models\WhatsAppTemplate;
@@ -131,6 +133,7 @@ class TicketController extends Controller
             'assignments.assignedTo', 'assignments.assignedBy', 'assignments.assignedTeam',
             'troubleshootingSessions.createdBy', 'troubleshootingSessions.steps.createdBy',
             'attachments.uploadedBy', 'whatsAppMessages.sentBy',
+            'progressUpdates.user', 'progressUpdates.attachments.uploadedBy',
         ]);
         $assignableUsers = User::where('is_active', true)->orderBy('name')->get();
         $assignableTeams = Team::where('is_active', true)->orderBy('name')->get();
@@ -332,5 +335,83 @@ class TicketController extends Controller
         $attachment->delete();
 
         return redirect()->route('tickets.show', $ticket)->with('status', 'Lampiran berhasil dihapus.');
+    }
+
+    public function storeProgressUpdate(StoreTicketProgressUpdateRequest $request, Ticket $ticket)
+    {
+        $validated = $request->validated();
+
+        $update = TicketProgressUpdate::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $request->user()->id,
+            'title' => $validated['title'] ?? null,
+            'note' => $validated['note'],
+            'status' => $validated['status'] ?? $ticket->status,
+        ]);
+
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photo) {
+                $path = $photo->store("ticket-attachments/{$ticket->id}", 'public');
+
+                TicketAttachment::create([
+                    'ticket_id' => $ticket->id,
+                    'ticket_progress_update_id' => $update->id,
+                    'uploaded_by' => $request->user()->id,
+                    'disk_path' => $path,
+                    'original_filename' => $photo->getClientOriginalName(),
+                    'mime_type' => $photo->getMimeType(),
+                    'file_size' => $photo->getSize(),
+                ]);
+            }
+        }
+
+        if (! empty($validated['status']) && $validated['status'] !== $ticket->status) {
+            $this->ticketService->changeStatus(
+                ticket: $ticket,
+                toStatus: $validated['status'],
+                note: 'Status diperbarui bersamaan dengan progress update: '.($validated['title'] ?: $validated['note']),
+                escalationLevel: null,
+                actor: $request->user(),
+                request: $request,
+            );
+        }
+
+        $this->auditService->log(
+            actor: $request->user(),
+            request: $request,
+            module: 'TICKET',
+            action: 'ADD_PROGRESS_UPDATE',
+            target: 'TicketProgressUpdate',
+            targetId: $update->id,
+            newValue: ['title' => $update->title, 'note' => $update->note],
+            ticketId: $ticket->ticket_number,
+        );
+
+        return redirect()->route('tickets.show', $ticket)->with('status', 'Progress update perbaikan dan dokumentasi foto berhasil ditambahkan ke timeline.');
+    }
+
+    public function destroyProgressUpdate(Request $request, Ticket $ticket, TicketProgressUpdate $progressUpdate)
+    {
+        $this->authorize('update', $ticket);
+        abort_unless($progressUpdate->ticket_id === $ticket->id, 404);
+
+        foreach ($progressUpdate->attachments as $attachment) {
+            Storage::disk('public')->delete($attachment->disk_path);
+            $attachment->delete();
+        }
+
+        $progressUpdate->delete();
+
+        $this->auditService->log(
+            actor: $request->user(),
+            request: $request,
+            module: 'TICKET',
+            action: 'DELETE_PROGRESS_UPDATE',
+            target: 'TicketProgressUpdate',
+            targetId: $progressUpdate->id,
+            ticketId: $ticket->ticket_number,
+        );
+
+        return redirect()->route('tickets.show', $ticket)->with('status', 'Progress update perbaikan berhasil dihapus.');
     }
 }

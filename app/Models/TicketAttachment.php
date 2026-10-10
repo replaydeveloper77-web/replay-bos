@@ -10,6 +10,7 @@ class TicketAttachment extends Model
 {
     protected $fillable = [
         'ticket_id',
+        'ticket_progress_update_id',
         'uploaded_by',
         'disk_path',
         'original_filename',
@@ -20,6 +21,11 @@ class TicketAttachment extends Model
     public function ticket(): BelongsTo
     {
         return $this->belongsTo(Ticket::class);
+    }
+
+    public function progressUpdate(): BelongsTo
+    {
+        return $this->belongsTo(TicketProgressUpdate::class, 'ticket_progress_update_id');
     }
 
     public function uploadedBy(): BelongsTo

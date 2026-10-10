@@ -16,7 +16,9 @@ return new class extends Migration
             $table->dropForeign(['quotation_id']);
         });
 
-        DB::statement('ALTER TABLE invoices MODIFY quotation_id BIGINT UNSIGNED NULL');
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE invoices MODIFY quotation_id BIGINT UNSIGNED NULL');
+        }
 
         Schema::table('invoices', function (Blueprint $table) {
             $table->foreign('quotation_id')->references('id')->on('quotations')->cascadeOnDelete();

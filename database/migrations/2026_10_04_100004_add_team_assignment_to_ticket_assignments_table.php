@@ -15,7 +15,9 @@ return new class extends Migration
 
         // A ticket_assignments row now represents EITHER a user assignment OR a team
         // assignment — assigned_to_id has to allow NULL for team-only rows.
-        DB::statement('ALTER TABLE ticket_assignments MODIFY assigned_to_id BIGINT UNSIGNED NULL');
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE ticket_assignments MODIFY assigned_to_id BIGINT UNSIGNED NULL');
+        }
 
         Schema::table('ticket_assignments', function (Blueprint $table) {
             $table->foreign('assigned_to_id')->references('id')->on('users')->cascadeOnDelete();
@@ -30,7 +32,9 @@ return new class extends Migration
             $table->dropForeign(['assigned_to_id']);
         });
 
-        DB::statement('ALTER TABLE ticket_assignments MODIFY assigned_to_id BIGINT UNSIGNED NOT NULL');
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE ticket_assignments MODIFY assigned_to_id BIGINT UNSIGNED NOT NULL');
+        }
 
         Schema::table('ticket_assignments', function (Blueprint $table) {
             $table->foreign('assigned_to_id')->references('id')->on('users')->cascadeOnDelete();

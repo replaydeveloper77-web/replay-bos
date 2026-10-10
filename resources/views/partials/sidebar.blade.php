@@ -20,6 +20,12 @@
             <i class="bi bi-person-badge me-2"></i> Portal Karyawan
         </a>
 
+        @can('teknisi.portal.view')
+            <a class="nav-link {{ request()->routeIs('portal-teknisi.*') ? 'active' : '' }}" href="{{ route('portal-teknisi.index') }}">
+                <i class="bi bi-tools me-2"></i> Portal Teknisi
+            </a>
+        @endcan
+
         @can('reseller.portal.view')
             <a class="nav-link {{ request()->routeIs('reseller-portal.*') ? 'active' : '' }}" href="{{ route('reseller-portal.index') }}">
                 <i class="bi bi-people me-2"></i> Pelanggan Saya
@@ -62,6 +68,12 @@
         @can('viewAny', \App\Models\ServicePackage::class)
             <a class="nav-link {{ request()->routeIs('service-packages.*') ? 'active' : '' }}" href="{{ route('service-packages.index') }}">
                 <i class="bi bi-box-seam me-2"></i> Paket Layanan
+            </a>
+        @endcan
+
+        @can('viewAny', \App\Models\PackageChangeRequest::class)
+            <a class="nav-link {{ request()->routeIs('package-changes.*') ? 'active' : '' }}" href="{{ route('package-changes.index') }}">
+                <i class="bi bi-arrow-down-up me-2"></i> Upgrade/Downgrade
             </a>
         @endcan
 
@@ -140,6 +152,12 @@
         @can('audit.view')
             <a class="nav-link {{ request()->routeIs('audit.*') ? 'active' : '' }}" href="{{ route('audit.index') }}">
                 <i class="bi bi-journal-text me-2"></i> Audit Trail
+            </a>
+        @endcan
+
+        @can('database.monitor')
+            <a class="nav-link {{ request()->routeIs('database-resources.*') ? 'active' : '' }}" href="{{ route('database-resources.index') }}">
+                <i class="bi bi-database me-2"></i> Resource Database
             </a>
         @endcan
 

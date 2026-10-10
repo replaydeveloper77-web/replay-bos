@@ -53,11 +53,11 @@
                         <div>{{ $employee->email ?? '-' }}</div>
                     </div>
                     <div class="col-6 mb-3">
-                        <div class="text-muted">Nomor JMO (BPJS TK)</div>
+                        <div class="text-muted">No. BPJS Ketenagakerjaan</div>
                         <div>{{ $employee->no_jmo ?? '-' }}</div>
                     </div>
                     <div class="col-6 mb-3">
-                        <div class="text-muted">Nomor KPJ (Jamsostek)</div>
+                        <div class="text-muted">No. BPJS Kesehatan</div>
                         <div>{{ $employee->no_kpj ?? '-' }}</div>
                     </div>
                     <div class="col-6 mb-3">

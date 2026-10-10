@@ -12,6 +12,21 @@ class StoreQuotationRequest extends FormRequest
         return $this->user()->can('create', Quotation::class);
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('items') && is_array($this->items)) {
+            $items = $this->items;
+            foreach ($items as $k => $item) {
+                if (isset($item['unit_price']) && is_string($item['unit_price'])) {
+                    $cleaned = str_replace('.', '', $item['unit_price']);
+                    $cleaned = str_replace(',', '.', $cleaned);
+                    $items[$k]['unit_price'] = $cleaned;
+                }
+            }
+            $this->merge(['items' => $items]);
+        }
+    }
+
     public function rules(): array
     {
         return [

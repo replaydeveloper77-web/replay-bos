@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WorkOrder extends Model
 {
-    public const TYPES = ['INSTALASI_BARU', 'RELOKASI', 'LAINNYA'];
+    public const TYPES = ['INSTALASI_BARU', 'RELOKASI', 'UPGRADE', 'DOWNGRADE', 'LAINNYA'];
 
     public const STATUSES = ['SCHEDULED', 'IN_PROGRESS', 'DONE', 'CANCELLED'];
 
@@ -59,6 +59,11 @@ class WorkOrder extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function packageChangeRequest(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PackageChangeRequest::class);
+    }
+
     public function typeLabel(): string
     {
         return static::typeLabelFor($this->type);
@@ -69,6 +74,8 @@ class WorkOrder extends Model
         return match ($type) {
             'INSTALASI_BARU' => 'Instalasi Baru',
             'RELOKASI' => 'Relokasi',
+            'UPGRADE' => 'Upgrade Paket',
+            'DOWNGRADE' => 'Downgrade Paket',
             'LAINNYA' => 'Lainnya',
             default => $type,
         };

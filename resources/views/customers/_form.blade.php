@@ -51,7 +51,7 @@
                 var cat = categorySelect.value;
                 resellerField.style.display = cat === 'HOME' ? '' : 'none';
                 if (serviceNumberInput) {
-                    var example = cat === 'RESELLER' ? 'RS-00001' : (cat === 'CORPORATE' ? 'CP-00001' : 'PLG-00001');
+                    var example = cat === 'RESELLER' ? '9202100001' : (cat === 'CORPORATE' ? '9202200001' : '9202300001');
                     serviceNumberInput.placeholder = 'Kosongkan untuk dibuat otomatis (' + example + ')';
                 }
             }
@@ -91,8 +91,8 @@
     </div>
     <div class="col-md-6 mb-3">
         <label class="form-label">Nomor Layanan (opsional)</label>
-        <input type="text" name="service_number" id="service-number-input" value="{{ old('service_number', $customer?->service_number) }}" class="form-control" placeholder="Kosongkan untuk dibuat otomatis (RS-XXXXX / CP-XXXXX / PLG-XXXXX)">
-        <div class="form-text">Kosongkan kalau tidak punya nomor khusus — sistem buatkan otomatis (RS-XXXXX untuk Reseller, CP-XXXXX untuk Corporate, PLG-XXXXX untuk Home).</div>
+        <input type="text" name="service_number" id="service-number-input" value="{{ old('service_number', $customer?->service_number) }}" class="form-control" placeholder="Kosongkan untuk dibuat otomatis (misal: 9202100001, 9202200001, 9202300001)">
+        <div class="form-text">Kosongkan kalau tidak punya nomor khusus — sistem buatkan otomatis (920210000[Urut] untuk Reseller, 920220000[Urut] untuk Corporate, 920230000[Urut] untuk Home).</div>
     </div>
 </div>
 

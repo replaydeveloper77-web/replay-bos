@@ -48,7 +48,7 @@
                         <label class="form-label small text-muted mb-1 fw-semibold">Kata Kunci Pencarian</label>
                         <div class="input-group input-group-sm">
                             <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-                            <input type="text" name="q" value="{{ request('q') }}" class="form-control border-start-0" placeholder="Cari Nama, Jabatan, NIK, Email, No. JMO, No. KPJ...">
+                            <input type="text" name="q" value="{{ request('q') }}" class="form-control border-start-0" placeholder="Cari Nama, Jabatan, NIK, Email, BPJS...">
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -94,8 +94,8 @@
                         <th style="border-right: 1px solid #d1d5db;">JABATAN</th>
                         <th style="border-right: 1px solid #d1d5db;">NIK</th>
                         <th style="border-right: 1px solid #d1d5db;">EMAIL</th>
-                        <th style="border-right: 1px solid #d1d5db;">NO. JMO</th>
-                        <th style="border-right: 1px solid #d1d5db;">NO. KPJ</th>
+                        <th style="border-right: 1px solid #d1d5db;">BPJS KETENAGAKERJAAN</th>
+                        <th style="border-right: 1px solid #d1d5db;">BPJS KESEHATAN</th>
                         <th style="width: 90px; text-align: center; border-right: 1px solid #d1d5db;">STATUS</th>
                         <th style="width: 140px; text-align: center;">AKSI</th>
                     </tr>
@@ -222,12 +222,12 @@
                                                     </div>
 
                                                     <div class="col-md-6">
-                                                        <label class="form-label small fw-semibold">Nomor JMO (BPJS TK)</label>
-                                                        <input type="text" name="no_jmo" value="{{ old('no_jmo', $item->no_jmo) }}" class="form-control form-control-sm" placeholder="Nomor akun / ID JMO">
+                                                        <label class="form-label small fw-semibold">Nomor BPJS Ketenagakerjaan</label>
+                                                        <input type="text" name="no_jmo" value="{{ old('no_jmo', $item->no_jmo) }}" class="form-control form-control-sm" placeholder="Nomor BPJS Ketenagakerjaan">
                                                     </div>
                                                     <div class="col-md-6">
-                                                        <label class="form-label small fw-semibold">Nomor KPJ (Jamsostek)</label>
-                                                        <input type="text" name="no_kpj" value="{{ old('no_kpj', $item->no_kpj) }}" class="form-control form-control-sm" placeholder="Nomor KPJ">
+                                                        <label class="form-label small fw-semibold">Nomor BPJS Kesehatan</label>
+                                                        <input type="text" name="no_kpj" value="{{ old('no_kpj', $item->no_kpj) }}" class="form-control form-control-sm" placeholder="Nomor BPJS Kesehatan">
                                                     </div>
 
                                                     <div class="col-md-6">
@@ -361,12 +361,12 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Nomor JMO (BPJS TK)</label>
-                                    <input type="text" name="no_jmo" value="{{ old('no_jmo') }}" class="form-control form-control-sm" placeholder="Nomor akun / ID JMO">
+                                    <label class="form-label small fw-semibold">Nomor BPJS Ketenagakerjaan</label>
+                                    <input type="text" name="no_jmo" value="{{ old('no_jmo') }}" class="form-control form-control-sm" placeholder="Nomor BPJS Ketenagakerjaan">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Nomor KPJ (Jamsostek)</label>
-                                    <input type="text" name="no_kpj" value="{{ old('no_kpj') }}" class="form-control form-control-sm" placeholder="Nomor KPJ">
+                                    <label class="form-label small fw-semibold">Nomor BPJS Kesehatan</label>
+                                    <input type="text" name="no_kpj" value="{{ old('no_kpj') }}" class="form-control form-control-sm" placeholder="Nomor BPJS Kesehatan">
                                 </div>
 
                                 <div class="col-md-6">

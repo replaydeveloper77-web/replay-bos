@@ -73,9 +73,30 @@
                         <div class="col-6 mb-2"><strong>Level Eskalasi:</strong> <span class="badge bg-danger">{{ str_replace('_', ' ', $ticket->escalation_level) }}</span></div>
                     @endif
                 </div>
-                @if ($ticket->resolution_note)
-                    <div class="alert alert-secondary mt-2 mb-0">
-                        <strong>Catatan Penyelesaian:</strong> {{ $ticket->resolution_note }}
+                @if ($ticket->resolution_note || in_array($ticket->status, ['RESOLVED', 'CLOSED']))
+                    <div class="alert alert-success border-success mt-3 mb-0">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div class="fw-bold text-success d-flex align-items-center gap-1.5">
+                                <i class="bi bi-file-earmark-check-fill"></i>
+                                <span>Laporan RFO (Reason For Outage) & Catatan Penyelesaian</span>
+                            </div>
+                            @if ($ticket->outageDuration())
+                                <span class="badge bg-success text-white">
+                                    <i class="bi bi-stopwatch me-1"></i>Durasi Gangguan: {{ $ticket->outageDuration() }}
+                                </span>
+                            @endif
+                        </div>
+                        <div class="text-dark small mt-1 text-break" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">{{ $ticket->resolution_note ?: 'Tiket telah diselesaikan (catatan detail RFO belum dicantumkan).' }}</div>
+                        @if ($ticket->resolved_at || $ticket->closed_at)
+                            <div class="text-muted mt-2 pt-2 border-top border-success-subtle small" style="font-size: 0.75rem;">
+                                @if ($ticket->resolved_at)
+                                    Diselesaikan: {{ $ticket->resolved_at->format('d/m/Y H:i') }} WIB
+                                @endif
+                                @if ($ticket->closed_at)
+                                    &bull; Ditutup: {{ $ticket->closed_at->format('d/m/Y H:i') }} WIB
+                                @endif
+                            </div>
+                        @endif
                     </div>
                 @endif
             </div>
@@ -83,18 +104,18 @@
             <div class="noc-stat-card bg-white p-3 mb-3">
                 <h6 class="mb-3">Dokumentasi / Lampiran</h6>
 
-                @if ($ticket->isPublicLinkExpired())
-                    <div class="alert alert-secondary small py-2 mb-3">
-                        <i class="bi bi-link-45deg"></i> Link untuk pelanggan sudah <strong>tidak berlaku</strong> (ticket sudah CLOSED).
-                    </div>
-                @else
-                    <div class="input-group input-group-sm mb-3">
-                        <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
-                        <input type="text" id="public-link-text" class="form-control" value="{{ $ticket->publicUrl() }}" readonly onclick="this.select()">
-                        <button type="button" id="public-link-copy-btn" class="btn btn-outline-success">Copy</button>
-                    </div>
-                    <div class="form-text mb-3">Link ini bisa dikirim ke pelanggan untuk lihat dokumentasi foto — otomatis tidak berlaku begitu ticket ditutup (CLOSED).</div>
-                @endif
+                <div class="input-group input-group-sm mb-2">
+                    <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                    <input type="text" id="public-link-text" class="form-control" value="{{ $ticket->publicUrl() }}" readonly onclick="this.select()">
+                    <button type="button" id="public-link-copy-btn" class="btn btn-outline-success">Copy</button>
+                    <a href="{{ $ticket->publicUrl() }}" target="_blank" class="btn btn-outline-primary">
+                        <i class="bi bi-phone me-1"></i> Buka Mockup HP
+                    </a>
+                </div>
+                <div class="form-text mb-3 text-success small">
+                    <i class="bi bi-shield-check me-1"></i>
+                    <strong>Link Tracking Permanen:</strong> Link ini tidak kadaluarsa agar client bisa terus memantau progress perbaikan hingga melihat tiket yang sudah solved beserta laporan RFO (Reason For Outage).
+                </div>
 
                 @if ($ticket->attachments->isEmpty())
                     <p class="text-muted small mb-3">Belum ada foto/dokumen yang diupload.</p>
@@ -168,13 +189,104 @@
             @endif
 
             <div class="noc-stat-card bg-white p-3">
-                <h6 class="mb-3">Timeline</h6>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0"><i class="bi bi-clock-history me-1 text-primary"></i> Timeline &amp; Progress Perbaikan</h6>
+                    @can('update', $ticket)
+                        <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#progressUpdateCollapse" aria-expanded="false" aria-controls="progressUpdateCollapse">
+                            <i class="bi bi-plus-circle me-1"></i> Update Progress &amp; Foto
+                        </button>
+                    @endcan
+                </div>
+
+                @can('update', $ticket)
+                    <div class="collapse mb-3" id="progressUpdateCollapse">
+                        <div class="p-3 bg-light rounded border">
+                            <div class="fw-semibold small text-dark mb-2">
+                                <i class="bi bi-tools text-primary me-1"></i> Tambah Progres Penanganan &amp; Dokumentasi Foto
+                            </div>
+                            <form method="POST" action="{{ route('tickets.progress-updates.store', $ticket) }}" enctype="multipart/form-data">
+                                @csrf
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-7">
+                                        <label class="form-label small mb-1 fw-semibold">Judul Kegiatan / Tahapan (opsional)</label>
+                                        <input type="text" name="title" class="form-control form-control-sm" placeholder="mis. Pengecekan Lapangan / Splicing Kabel / Penggantian Port">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label small mb-1 fw-semibold">Perbarui Status Tiket (opsional)</label>
+                                        <select name="status" class="form-select form-select-sm">
+                                            @foreach ($statuses as $st)
+                                                <option value="{{ $st }}" @selected($ticket->status === $st)>Status: {{ $st }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small mb-1 fw-semibold">Catatan / Keterangan Progres <span class="text-danger">*</span></label>
+                                    <textarea name="note" class="form-control form-control-sm" rows="3" placeholder="Tuliskan perkembangan perbaikan, tindakan teknisi, atau kendala di lapangan..." required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small mb-1 fw-semibold"><i class="bi bi-camera me-1"></i> Foto Dokumentasi (opsional)</label>
+                                    <input type="file" name="photos[]" class="form-control form-control-sm" multiple accept="image/*">
+                                    <div class="form-text small">Pilih satu atau beberapa foto dokumentasi (JPG, PNG, WEBP, maks 10MB per file). Foto akan tersimpan langsung pada catatan progres ini dan tampil di link client.</div>
+                                </div>
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#progressUpdateCollapse">Tutup</button>
+                                    <button type="submit" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-check2-circle me-1"></i> Simpan Progress &amp; Foto
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                @endcan
+
                 <ul class="list-unstyled mb-0">
                     @forelse ($timeline as $event)
                         <li class="d-flex mb-3">
-                            <div class="me-3 text-muted small" style="width: 130px;">{{ $event['at']->format('d/m H:i:s') }}</div>
-                            <div>
-                                @if ($event['type'] === 'STATUS_CHANGE')
+                            <div class="me-3 text-muted small" style="width: 120px; flex-shrink: 0;">{{ $event['at']->format('d/m H:i:s') }}</div>
+                            <div class="flex-grow-1">
+                                @if ($event['type'] === 'PROGRESS_UPDATE')
+                                    <div class="card border-primary-subtle shadow-xs mb-1 w-100">
+                                        <div class="card-body p-2.5">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                                                    <span class="badge bg-primary"><i class="bi bi-tools me-1"></i> Progress Update</span>
+                                                    <span class="fw-semibold small text-dark">{{ $event['user']?->name ?? $event['user']?->username }}</span>
+                                                    @if (!empty($event['status']))
+                                                        <span class="badge bg-secondary-subtle text-secondary border small">{{ $event['status'] }}</span>
+                                                    @endif
+                                                </div>
+                                                @can('update', $ticket)
+                                                    <form method="POST" action="{{ route('tickets.progress-updates.destroy', [$ticket, $event['id']]) }}" onsubmit="return confirm('Hapus progress update ini beserta fotonya?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-link text-danger p-0 border-0" title="Hapus update" style="font-size: 0.85rem; line-height: 1;">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                @endcan
+                                            </div>
+                                            @if (!empty($event['title']))
+                                                <div class="fw-bold text-dark small">{{ $event['title'] }}</div>
+                                            @endif
+                                            <div class="text-secondary small mt-1 text-break" style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;">{{ $event['note'] }}</div>
+
+                                            @if (!empty($event['attachments']) && $event['attachments']->isNotEmpty())
+                                                <div class="row g-2 mt-2">
+                                                    @foreach ($event['attachments'] as $photo)
+                                                        @if ($photo->isImage())
+                                                            <div class="col-4 col-sm-3 col-md-2">
+                                                                <a href="{{ $photo->url() }}" target="_blank" class="d-block position-relative rounded overflow-hidden border">
+                                                                    <img src="{{ $photo->url() }}" class="img-fluid" style="height: 80px; width: 100%; object-fit: cover;" alt="{{ $photo->original_filename }}">
+                                                                </a>
+                                                            </div>
+                                                        @endif
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @elseif ($event['type'] === 'STATUS_CHANGE')
                                     <div>
                                         <strong>{{ $event['user']?->username }}</strong>
                                         @if (is_null($event['from_status']))
@@ -185,6 +297,9 @@
                                             mengubah status <span class="badge bg-light text-dark border">{{ $event['from_status'] }}</span> &rarr; <span class="badge bg-light text-dark border">{{ $event['to_status'] }}</span>
                                         @endif
                                     </div>
+                                    @if ($event['note'])
+                                        <div class="text-muted small">{{ $event['note'] }}</div>
+                                    @endif
                                 @else
                                     <div>
                                         <strong>{{ $event['user']?->username }}</strong>
@@ -194,9 +309,9 @@
                                             meng-assign ke <strong>{{ $event['assigned_to']?->username }}</strong>
                                         @endif
                                     </div>
-                                @endif
-                                @if ($event['note'])
-                                    <div class="text-muted small">{{ $event['note'] }}</div>
+                                    @if ($event['note'])
+                                        <div class="text-muted small">{{ $event['note'] }}</div>
+                                    @endif
                                 @endif
                             </div>
                         </li>
@@ -321,18 +436,22 @@
                     <h6>Update Status</h6>
                     <form method="POST" action="{{ route('tickets.status', $ticket) }}">
                         @csrf
-                        <select name="status" class="form-select mb-2" required>
+                        <select name="status" id="ticket-status-select" class="form-select mb-2" required>
                             @foreach ($statuses as $status)
                                 <option value="{{ $status }}" {{ $ticket->status === $status ? 'selected' : '' }}>{{ $status === 'HANDLE' ? 'HANDLE (Sedang Ditangani)' : $status }}</option>
                             @endforeach
                         </select>
-                        <select name="escalation_level" class="form-select mb-2">
+                        <select name="escalation_level" id="ticket-escalation-select" class="form-select mb-2">
                             <option value="">-- Level Eskalasi (isi kalau status ESCALATED) --</option>
                             @foreach ($escalationLevels as $level)
                                 <option value="{{ $level }}">{{ str_replace('_', ' ', $level) }}</option>
                             @endforeach
                         </select>
-                        <textarea name="note" class="form-control mb-2" placeholder="Catatan (wajib untuk RESOLVED/CLOSED/ESCALATED)" rows="3"></textarea>
+                        <div id="rfo-helper-badge" class="alert alert-success py-1.5 px-2 mb-2 small" style="display: none; font-size: 0.76rem;">
+                            <i class="bi bi-file-earmark-check me-1"></i>
+                            <strong>Laporan RFO (Reason For Outage):</strong> Tuliskan akar masalah gangguan dan solusi perbaikan untuk dilihat client di link tracking.
+                        </div>
+                        <textarea name="note" id="ticket-status-note" class="form-control mb-2" placeholder="Catatan (wajib untuk RESOLVED/CLOSED/ESCALATED)" rows="3"></textarea>
                         <button type="submit" class="btn btn-primary btn-sm w-100">Update Status</button>
                     </form>
                 </div>
@@ -446,6 +565,29 @@
             if (templateSelect && templateSelect.value) {
                 renderTemplate();
             }
+
+            // Handler untuk Status Change & RFO Helper
+            var statusSelect = document.getElementById('ticket-status-select');
+            var statusNote = document.getElementById('ticket-status-note');
+            var rfoBadge = document.getElementById('rfo-helper-badge');
+
+            function updateStatusHelper() {
+                if (!statusSelect || !statusNote) return;
+                var val = statusSelect.value;
+                if (val === 'RESOLVED' || val === 'CLOSED') {
+                    if (rfoBadge) rfoBadge.style.display = 'block';
+                    statusNote.placeholder = "Tuliskan Laporan RFO (Reason For Outage)\nContoh: Penyebab: Dropcore FO putus di tiang #12. Tindakan: Splicing ulang & testing redaman normal -18dBm.";
+                } else if (val === 'ESCALATED') {
+                    if (rfoBadge) rfoBadge.style.display = 'none';
+                    statusNote.placeholder = "Alasan eskalasi dan detail kendala teknis...";
+                } else {
+                    if (rfoBadge) rfoBadge.style.display = 'none';
+                    statusNote.placeholder = "Catatan pembaruan status (opsional)...";
+                }
+            }
+
+            statusSelect?.addEventListener('change', updateStatusHelper);
+            updateStatusHelper();
         })();
     </script>
     @endpush

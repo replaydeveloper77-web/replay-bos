@@ -16,7 +16,9 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\FieldVisitReportController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LeaveRequestController;
+use App\Http\Controllers\PackageChangeRequestController;
 use App\Http\Controllers\PortalKaryawanController;
+use App\Http\Controllers\PortalTeknisiController;
 use App\Http\Controllers\PublicTicketController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\ResellerPortalController;
@@ -44,6 +46,28 @@ Route::get('/', function () {
 Route::get('/p/{token}', [PublicTicketController::class, 'show'])
     ->name('public.ticket')
     ->middleware('throttle:30,1');
+
+Route::get('/storage-link', function () {
+    $target = storage_path('app/public');
+    $link = public_path('storage');
+
+    if (file_exists($link) || is_link($link)) {
+        if (is_link($link)) {
+            @unlink($link);
+        }
+    }
+
+    try {
+        \Illuminate\Support\Facades\Artisan::call('storage:link');
+        return 'Storage link berhasil dibuat via Artisan: ' . nl2br(e(\Illuminate\Support\Facades\Artisan::output()));
+    } catch (\Throwable $e) {
+        if (!file_exists($link)) {
+            @symlink($target, $link);
+            return 'Storage link berhasil dibuat via symlink native: ' . $link . ' -> ' . $target;
+        }
+        return 'Pesan: ' . $e->getMessage();
+    }
+});
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -89,6 +113,8 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureTwoFactorIsEnabled::class]
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
     Route::get('/customers/create', [CustomerController::class, 'create'])->name('customers.create');
     Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
+    Route::get('/customers/import/template', [CustomerController::class, 'downloadTemplate'])->name('customers.import.template');
+    Route::post('/customers/import', [CustomerController::class, 'importSpreadsheet'])->name('customers.import');
     Route::get('/customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
     Route::get('/customers/{customer}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
     Route::put('/customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
@@ -121,6 +147,8 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureTwoFactorIsEnabled::class]
     Route::get('/tickets/{ticket}/whatsapp', [TicketController::class, 'shareWhatsapp'])->name('tickets.whatsapp');
     Route::post('/tickets/{ticket}/attachments', [TicketController::class, 'storeAttachment'])->name('tickets.attachments.store');
     Route::delete('/tickets/{ticket}/attachments/{attachment}', [TicketController::class, 'destroyAttachment'])->name('tickets.attachments.destroy');
+    Route::post('/tickets/{ticket}/progress-updates', [TicketController::class, 'storeProgressUpdate'])->name('tickets.progress-updates.store');
+    Route::delete('/tickets/{ticket}/progress-updates/{progressUpdate}', [TicketController::class, 'destroyProgressUpdate'])->name('tickets.progress-updates.destroy');
     Route::post('/tickets/{ticket}/whatsapp-messages', [TicketController::class, 'sendWhatsappMessage'])->name('tickets.whatsapp-messages.store');
 
     Route::post('/tickets/{ticket}/troubleshooting', [TroubleshootingController::class, 'store'])->name('troubleshooting.store');
@@ -154,6 +182,14 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureTwoFactorIsEnabled::class]
     Route::put('/service-packages/{servicePackage}', [ServicePackageController::class, 'update'])->name('service-packages.update');
     Route::post('/service-packages/{servicePackage}/disable', [ServicePackageController::class, 'disable'])->name('service-packages.disable');
     Route::post('/service-packages/{servicePackage}/enable', [ServicePackageController::class, 'enable'])->name('service-packages.enable');
+
+    Route::get('/package-changes', [PackageChangeRequestController::class, 'index'])->name('package-changes.index');
+    Route::get('/package-changes/create', [PackageChangeRequestController::class, 'create'])->name('package-changes.create');
+    Route::post('/package-changes', [PackageChangeRequestController::class, 'store'])->name('package-changes.store');
+    Route::get('/package-changes/{packageChange}', [PackageChangeRequestController::class, 'show'])->name('package-changes.show');
+    Route::post('/package-changes/{packageChange}/approve', [PackageChangeRequestController::class, 'approve'])->name('package-changes.approve');
+    Route::post('/package-changes/{packageChange}/reject', [PackageChangeRequestController::class, 'reject'])->name('package-changes.reject');
+    Route::post('/package-changes/{packageChange}/cancel', [PackageChangeRequestController::class, 'cancel'])->name('package-changes.cancel');
 
     Route::get('/quotations', [QuotationController::class, 'index'])->name('quotations.index');
     Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
@@ -222,6 +258,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureTwoFactorIsEnabled::class]
     Route::post('/work-orders/{workOrder}/change-status', [WorkOrderController::class, 'changeStatus'])->name('work-orders.change-status');
 
     Route::get('/portal-karyawan', [PortalKaryawanController::class, 'index'])->name('portal-karyawan.index');
+    Route::get('/portal-teknisi', [PortalTeknisiController::class, 'index'])->name('portal-teknisi.index');
 
     Route::get('/absensi', [AttendanceController::class, 'self'])->name('attendance.self');
     Route::post('/absensi/check-in', [AttendanceController::class, 'checkIn'])->name('attendance.check-in');
@@ -248,4 +285,11 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureTwoFactorIsEnabled::class]
 
     Route::get('/reseller-portal', [ResellerPortalController::class, 'index'])->name('reseller-portal.index');
     Route::get('/reseller-portal/{customer}', [ResellerPortalController::class, 'show'])->name('reseller-portal.show');
+
+    Route::prefix('resources')->name('database-resources.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\DatabaseResourceController::class, 'index'])->name('index');
+        Route::post('/optimize', [\App\Http\Controllers\DatabaseResourceController::class, 'optimize'])->name('optimize');
+        Route::post('/optimize-all', [\App\Http\Controllers\DatabaseResourceController::class, 'optimizeAll'])->name('optimize-all');
+        Route::get('/stats', [\App\Http\Controllers\DatabaseResourceController::class, 'jsonStats'])->name('stats');
+    });
 });

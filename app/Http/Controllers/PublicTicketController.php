@@ -14,8 +14,21 @@ class PublicTicketController extends Controller
             return response()->view('public.ticket-expired', [], 410);
         }
 
-        $ticket->load('attachments');
+        $ticket->load([
+            'attachments.uploadedBy',
+            'progressUpdates.attachments',
+            'progressUpdates.user',
+            'customer',
+            'team',
+            'pic',
+            'statusHistories.changedBy',
+            'assignments.assignedTo',
+            'assignments.assignedTeam',
+        ]);
 
-        return view('public.ticket', ['ticket' => $ticket]);
+        return view('public.ticket', [
+            'ticket' => $ticket,
+            'timeline' => $ticket->timeline(),
+        ]);
     }
 }

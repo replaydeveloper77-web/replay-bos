@@ -23,7 +23,7 @@ class AttendanceController extends Controller
             return view('attendance.not-linked');
         }
 
-        $today = Attendance::where('employee_id', $employee->id)->where('date', now()->toDateString())->first();
+        $today = Attendance::where('employee_id', $employee->id)->whereDate('date', now()->toDateString())->first();
         $history = Attendance::where('employee_id', $employee->id)
             ->where('date', '<', now()->toDateString())
             ->orderByDesc('date')
@@ -44,11 +44,24 @@ class AttendanceController extends Controller
         $data = $request->validate([
             'lat' => ['nullable', 'numeric'],
             'lng' => ['nullable', 'numeric'],
-            'notes' => ['nullable', 'string'],
+            'address' => ['nullable', 'string', 'max:500'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'photo' => ['nullable'],
         ]);
 
+        $photo = $request->file('photo') ?? $request->input('photo');
+
         try {
-            $this->attendanceService->checkIn($employee, $data['lat'] ?? null, $data['lng'] ?? null, $data['notes'] ?? null, $request->user(), $request);
+            $this->attendanceService->checkIn(
+                $employee,
+                $data['lat'] ?? null,
+                $data['lng'] ?? null,
+                $data['notes'] ?? null,
+                $request->user(),
+                $request,
+                $photo,
+                $data['address'] ?? null
+            );
         } catch (RuntimeException $e) {
             return back()->with('status', $e->getMessage());
         }
@@ -67,17 +80,30 @@ class AttendanceController extends Controller
         $data = $request->validate([
             'lat' => ['nullable', 'numeric'],
             'lng' => ['nullable', 'numeric'],
-            'notes' => ['nullable', 'string'],
+            'address' => ['nullable', 'string', 'max:500'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'photo' => ['nullable'],
         ]);
 
-        $attendance = Attendance::where('employee_id', $employee->id)->where('date', now()->toDateString())->first();
+        $attendance = Attendance::where('employee_id', $employee->id)->whereDate('date', now()->toDateString())->first();
 
         if (! $attendance) {
             return back()->with('status', 'Belum check-in hari ini, tidak bisa check-out.');
         }
 
+        $photo = $request->file('photo') ?? $request->input('photo');
+
         try {
-            $this->attendanceService->checkOut($attendance, $data['lat'] ?? null, $data['lng'] ?? null, $data['notes'] ?? null, $request->user(), $request);
+            $this->attendanceService->checkOut(
+                $attendance,
+                $data['lat'] ?? null,
+                $data['lng'] ?? null,
+                $data['notes'] ?? null,
+                $request->user(),
+                $request,
+                $photo,
+                $data['address'] ?? null
+            );
         } catch (RuntimeException $e) {
             return back()->with('status', $e->getMessage());
         }

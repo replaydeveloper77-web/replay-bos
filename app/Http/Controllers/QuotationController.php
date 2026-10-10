@@ -42,9 +42,9 @@ class QuotationController extends Controller
         return view('quotations.create', array_merge($this->formData(), [
             'quotation' => null,
             'ppnRate' => (float) Setting::get('ppn_rate', '11'),
-            'existingItemsJson' => $registrationFee > 0 ? [
+            'existingItemsJson' => old('items') ?: ($registrationFee > 0 ? [
                 ['service_package_id' => null, 'item_name' => 'Biaya Registrasi', 'qty' => 1, 'unit_price' => $registrationFee],
-            ] : [],
+            ] : []),
         ]));
     }
 
@@ -73,7 +73,7 @@ class QuotationController extends Controller
         return view('quotations.create', array_merge($this->formData(), [
             'quotation' => $quotation,
             'ppnRate' => (float) $quotation->ppn_rate,
-            'existingItemsJson' => $quotation->items->map(fn ($i) => [
+            'existingItemsJson' => old('items') ?: $quotation->items->map(fn ($i) => [
                 'service_package_id' => $i->service_package_id,
                 'item_name' => $i->item_name,
                 'qty' => $i->qty,

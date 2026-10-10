@@ -95,7 +95,7 @@ class WorkOrderController extends Controller
 
     private function technicians()
     {
-        return User::whereHas('roles', fn ($q) => $q->whereIn('slug', ['noc-engineer', 'noc-admin']))
+        return User::whereHas('roles', fn ($q) => $q->whereIn('slug', ['noc-engineer', 'noc-admin', 'teknisi']))
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name', 'username']);

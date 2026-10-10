@@ -58,12 +58,12 @@
 
 <div class="row">
     <div class="col-md-6 mb-3">
-        <label class="form-label">Nomor JMO (BPJS Ketenagakerjaan)</label>
-        <input type="text" name="no_jmo" value="{{ old('no_jmo', $employee?->no_jmo) }}" class="form-control" placeholder="Nomor akun / ID JMO">
+        <label class="form-label">No. BPJS Ketenagakerjaan</label>
+        <input type="text" name="no_jmo" value="{{ old('no_jmo', $employee?->no_jmo) }}" class="form-control" placeholder="Nomor BPJS Ketenagakerjaan">
     </div>
     <div class="col-md-6 mb-3">
-        <label class="form-label">Nomor KPJ (Kartu Peserta Jamsostek)</label>
-        <input type="text" name="no_kpj" value="{{ old('no_kpj', $employee?->no_kpj) }}" class="form-control" placeholder="Nomor KPJ">
+        <label class="form-label">No. BPJS Kesehatan</label>
+        <input type="text" name="no_kpj" value="{{ old('no_kpj', $employee?->no_kpj) }}" class="form-control" placeholder="Nomor BPJS Kesehatan">
     </div>
 </div>
 

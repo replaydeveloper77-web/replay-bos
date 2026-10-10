@@ -112,7 +112,44 @@ class WorkOrderService
         return $workOrder;
     }
 
-    private function generateWorkOrderNumber(): string
+    public function createFromPackageChange(\App\Models\PackageChangeRequest $changeRequest, User $actor, ?string $notes = null): WorkOrder
+    {
+        $changeRequest->loadMissing('customer', 'currentPackage', 'targetPackage');
+        $fromName = $changeRequest->currentPackageLabel();
+        $toName = $changeRequest->targetPackageLabel();
+
+        $woNotes = "Work Order {$changeRequest->typeLabel()} Paket: {$fromName} -> {$toName}. [Ref: {$changeRequest->request_number}]";
+        if ($notes) {
+            $woNotes .= "\nCatatan Finance: {$notes}";
+        }
+        if ($changeRequest->notes) {
+            $woNotes .= "\nCatatan Pengajuan: {$changeRequest->notes}";
+        }
+
+        $workOrder = WorkOrder::create([
+            'work_order_number' => $this->generateWorkOrderNumber(),
+            'customer_id' => $changeRequest->customer_id,
+            'type' => $changeRequest->type,
+            'status' => 'SCHEDULED',
+            'scheduled_date' => now()->toDateString(),
+            'notes' => $woNotes,
+            'created_by' => $actor->id,
+        ]);
+
+        $this->auditService->log(
+            actor: $actor,
+            request: request(),
+            module: 'WORK_ORDER',
+            action: 'CREATE_WORK_ORDER',
+            target: 'WorkOrder',
+            targetId: $workOrder->id,
+            newValue: $workOrder->only(['work_order_number', 'customer_id', 'type', 'scheduled_date']),
+        );
+
+        return $workOrder;
+    }
+
+    public function generateWorkOrderNumber(): string
     {
         return DB::transaction(function () {
             $prefix = 'WO-';

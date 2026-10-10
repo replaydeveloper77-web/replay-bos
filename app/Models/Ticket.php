@@ -192,9 +192,14 @@ class Ticket extends Model
         return $this->hasMany(TicketAttachment::class)->orderByDesc('created_at');
     }
 
+    public function progressUpdates(): HasMany
+    {
+        return $this->hasMany(TicketProgressUpdate::class)->with(['user', 'attachments'])->orderBy('created_at');
+    }
+
     public function timeline()
     {
-        return $this->statusHistories
+        $statusHistories = $this->statusHistories
             ->map(fn ($h) => [
                 'type' => 'STATUS_CHANGE',
                 'at' => $h->created_at,
@@ -202,15 +207,31 @@ class Ticket extends Model
                 'from_status' => $h->from_status,
                 'to_status' => $h->to_status,
                 'note' => $h->note,
-            ])
-            ->concat($this->assignments->map(fn ($a) => [
-                'type' => 'ASSIGNED',
-                'at' => $a->created_at,
-                'user' => $a->assignedBy,
-                'assigned_to' => $a->assignedTo,
-                'assigned_team' => $a->assignedTeam,
-                'note' => $a->note,
-            ]))
+            ]);
+
+        $assignments = $this->assignments->map(fn ($a) => [
+            'type' => 'ASSIGNED',
+            'at' => $a->created_at,
+            'user' => $a->assignedBy,
+            'assigned_to' => $a->assignedTo,
+            'assigned_team' => $a->assignedTeam,
+            'note' => $a->note,
+        ]);
+
+        $progressUpdates = $this->progressUpdates->map(fn ($p) => [
+            'type' => 'PROGRESS_UPDATE',
+            'id' => $p->id,
+            'at' => $p->created_at,
+            'user' => $p->user,
+            'title' => $p->title,
+            'note' => $p->note,
+            'status' => $p->status,
+            'attachments' => $p->attachments,
+        ]);
+
+        return $statusHistories
+            ->concat($assignments)
+            ->concat($progressUpdates)
             ->sortBy('at')
             ->values();
     }
@@ -266,9 +287,8 @@ class Ticket extends Model
     }
 
     /**
-     * Public, unauthenticated link for the customer to view attachment photos.
-     * Stops working once the ticket is CLOSED — checked live via isPublicLinkExpired(),
-     * not a stored expiry timestamp, so no background job is needed.
+     * Public, unauthenticated link for the customer to view repair progress, photos, and RFO.
+     * Permanent link that does NOT expire, allowing clients to monitor progress and view solved tickets & RFO.
      */
     public function publicUrl(): ?string
     {
@@ -279,9 +299,36 @@ class Ticket extends Model
         return url("/p/{$this->public_token}");
     }
 
+    /**
+     * Public link expiry check.
+     * Returns false so clients can always view progress, resolved status, and RFO.
+     */
     public function isPublicLinkExpired(): bool
     {
-        return $this->status === 'CLOSED';
+        return false;
+    }
+
+    /**
+     * Calculate outage / downtime duration when ticket is resolved or closed.
+     */
+    public function outageDuration(): ?string
+    {
+        $endTime = $this->resolved_at ?? $this->closed_at;
+        if (! $endTime || ! $this->created_at) {
+            return null;
+        }
+
+        $totalMinutes = (int) $this->created_at->diffInMinutes($endTime);
+        $hours = intdiv($totalMinutes, 60);
+        $mins = $totalMinutes % 60;
+
+        if ($hours > 0 && $mins > 0) {
+            return "{$hours} Jam {$mins} Menit";
+        } elseif ($hours > 0) {
+            return "{$hours} Jam";
+        } else {
+            return max(1, $mins).' Menit';
+        }
     }
 
     public function whatsappSummary(): string
@@ -309,6 +356,8 @@ class Ticket extends Model
                 $desc = $event['from_status']
                     ? "Status {$event['from_status']} -> {$event['to_status']}"
                     : "Ticket dibuat, status {$event['to_status']}";
+            } elseif ($event['type'] === 'PROGRESS_UPDATE') {
+                $desc = 'Update Progres: '.($event['title'] ?: 'Tindakan Teknisi');
             } else {
                 $desc = 'Ticket di-assign ke '.($event['assigned_to']?->name ?? '-');
             }
@@ -316,9 +365,22 @@ class Ticket extends Model
             $lines[] = "{$time} - {$desc}".($event['note'] ? " ({$event['note']})" : '');
         }
 
-        if ($this->relationLoaded('attachments') && $this->attachments->isNotEmpty() && ! $this->isPublicLinkExpired()) {
+        if (in_array($this->status, self::CLOSED_STATUSES, true) && $this->resolution_note) {
             $lines[] = '';
-            $lines[] = 'Lihat dokumentasi foto: '.$this->publicUrl();
+            $lines[] = '*RFO (Reason For Outage):*';
+            $lines[] = $this->resolution_note;
+            if ($this->outageDuration()) {
+                $lines[] = "Durasi Gangguan: {$this->outageDuration()}";
+            }
+        }
+
+        if ($this->publicUrl()) {
+            $lines[] = '';
+            if (in_array($this->status, self::CLOSED_STATUSES, true)) {
+                $lines[] = 'Lihat laporan tuntas & RFO: '.$this->publicUrl();
+            } else {
+                $lines[] = 'Pantau live progress perbaikan: '.$this->publicUrl();
+            }
         }
 
         $lines[] = '';

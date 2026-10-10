@@ -25,14 +25,23 @@ class PortalKaryawanController extends Controller
         $leaveRequests = [];
 
         if ($employee) {
-            $todayAtt = Attendance::where('employee_id', $employee->id)->where('date', now()->toDateString())->first();
+            $todayAtt = Attendance::where('employee_id', $employee->id)->whereDate('date', now()->toDateString())->first();
             if ($todayAtt) {
                 $today = [
                     'id' => $todayAtt->id,
                     'is_checked_in' => $todayAtt->isCheckedIn(),
                     'is_checked_out' => $todayAtt->isCheckedOut(),
                     'check_in_at' => $todayAtt->check_in_at?->format('H:i'),
+                    'check_in_lat' => $todayAtt->check_in_lat,
+                    'check_in_lng' => $todayAtt->check_in_lng,
+                    'check_in_address' => $todayAtt->check_in_address,
+                    'check_in_photo_url' => $todayAtt->checkInPhotoUrl(),
                     'check_out_at' => $todayAtt->check_out_at?->format('H:i'),
+                    'check_out_lat' => $todayAtt->check_out_lat,
+                    'check_out_lng' => $todayAtt->check_out_lng,
+                    'check_out_address' => $todayAtt->check_out_address,
+                    'check_out_photo_url' => $todayAtt->checkOutPhotoUrl(),
+                    'notes' => $todayAtt->notes,
                 ];
             }
 
@@ -45,7 +54,16 @@ class PortalKaryawanController extends Controller
                     'id' => $att->id,
                     'date' => $att->date?->format('d/m/Y'),
                     'check_in_at' => $att->check_in_at?->format('H:i'),
+                    'check_in_lat' => $att->check_in_lat,
+                    'check_in_lng' => $att->check_in_lng,
+                    'check_in_address' => $att->check_in_address,
+                    'check_in_photo_url' => $att->checkInPhotoUrl(),
                     'check_out_at' => $att->check_out_at?->format('H:i'),
+                    'check_out_lat' => $att->check_out_lat,
+                    'check_out_lng' => $att->check_out_lng,
+                    'check_out_address' => $att->check_out_address,
+                    'check_out_photo_url' => $att->checkOutPhotoUrl(),
+                    'notes' => $att->notes,
                 ])
                 ->all();
 

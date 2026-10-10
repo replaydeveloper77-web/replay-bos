@@ -48,6 +48,7 @@ class UpdateTicketRequest extends FormRequest
             'customer_category' => ['nullable', 'string', Rule::in(['HOME', 'CORPORATE', 'RESELLER'])],
             'customer_name' => ['nullable', 'string', 'max:255'],
             'customer_phone' => ['nullable', 'string', 'max:20'],
+            'resolution_note' => ['nullable', 'string'],
         ];
     }
 }

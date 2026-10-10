@@ -12,6 +12,7 @@ use App\Models\Employee;
 use App\Models\FieldVisitReport;
 use App\Models\Invoice;
 use App\Models\LeaveRequest;
+use App\Models\PackageChangeRequest;
 use App\Models\Quotation;
 use App\Models\Role;
 use App\Models\ServicePackage;
@@ -29,6 +30,7 @@ use App\Policies\EmployeePolicy;
 use App\Policies\FieldVisitReportPolicy;
 use App\Policies\InvoicePolicy;
 use App\Policies\LeaveRequestPolicy;
+use App\Policies\PackageChangeRequestPolicy;
 use App\Policies\QuotationPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\ServicePackagePolicy;
@@ -78,6 +80,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Attendance::class, AttendancePolicy::class);
         Gate::policy(LeaveRequest::class, LeaveRequestPolicy::class);
         Gate::policy(FieldVisitReport::class, FieldVisitReportPolicy::class);
+        Gate::policy(PackageChangeRequest::class, PackageChangeRequestPolicy::class);
 
         // Abilities not tied to a specific Eloquent model.
         Gate::define('dashboard.view', fn (User $user) => $user->hasPermission('dashboard.view'));
@@ -88,5 +91,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('settings.manage', fn (User $user) => $user->hasPermission('settings.manage'));
         Gate::define('api.manage', fn (User $user) => $user->hasPermission('api.manage'));
         Gate::define('reseller.portal.view', fn (User $user) => $user->hasPermission('reseller.portal.view'));
+        Gate::define('teknisi.portal.view', fn (User $user) => $user->hasPermission('teknisi.portal.view') || $user->hasRole('teknisi') || $user->hasRole('super-admin'));
+        Gate::define('database.monitor', fn (User $user) => $user->hasPermission('database.monitor') || $user->hasRole('super-admin'));
     }
 }

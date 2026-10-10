@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { usePage, Link, router } from '@inertiajs/vue3';
 import type { PageProps } from '@/types';
 
@@ -17,6 +17,24 @@ const toggleSidebar = () => {
     isSidebarOpen.value = !isSidebarOpen.value;
 };
 
+const closeSidebar = () => {
+    isSidebarOpen.value = false;
+};
+
+const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && isSidebarOpen.value) {
+        closeSidebar();
+    }
+};
+
+onMounted(() => {
+    window.addEventListener('keydown', onKeyDown);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('keydown', onKeyDown);
+});
+
 const handleLogout = () => {
     router.post('/logout');
 };
@@ -32,6 +50,13 @@ const isActive = (path: string) => {
 
 <template>
     <div class="min-h-screen bg-light">
+        <!-- Backdrop -->
+        <div 
+            v-if="isSidebarOpen" 
+            class="noc-sidebar-backdrop show" 
+            @click="closeSidebar"
+        ></div>
+
         <!-- Sidebar -->
         <aside class="noc-sidebar" :class="{ show: isSidebarOpen }">
             <div class="brand">
@@ -49,6 +74,10 @@ const isActive = (path: string) => {
 
                 <a class="nav-link" :class="{ active: isActive('/portal-karyawan') }" href="/portal-karyawan">
                     <i class="bi bi-person-badge me-2"></i> Portal Karyawan
+                </a>
+
+                <a class="nav-link" :class="{ active: isActive('/portal-teknisi') }" href="/portal-teknisi">
+                    <i class="bi bi-tools me-2"></i> Portal Teknisi
                 </a>
 
                 <a class="nav-link" :class="{ active: isActive('/reseller-portal') }" href="/reseller-portal">
@@ -81,6 +110,10 @@ const isActive = (path: string) => {
 
                 <a class="nav-link" :class="{ active: isActive('/service-packages') }" href="/service-packages">
                     <i class="bi bi-box-seam me-2"></i> Paket Layanan
+                </a>
+
+                <a class="nav-link" :class="{ active: isActive('/package-changes') }" href="/package-changes">
+                    <i class="bi bi-arrow-down-up me-2"></i> Upgrade/Downgrade
                 </a>
 
                 <a class="nav-link" :class="{ active: isActive('/teams') }" href="/teams">
@@ -133,6 +166,10 @@ const isActive = (path: string) => {
 
                 <a class="nav-link" :class="{ active: isActive('/audit') }" href="/audit">
                     <i class="bi bi-journal-text me-2"></i> Audit Trail
+                </a>
+
+                <a class="nav-link" :class="{ active: isActive('/resources') }" href="/resources">
+                    <i class="bi bi-database me-2"></i> Resource Database
                 </a>
 
                 <a class="nav-link" :class="{ active: isActive('/settings') }" href="/settings">
@@ -213,7 +250,8 @@ const isActive = (path: string) => {
 
 .noc-sidebar {
     width: 250px;
-    min-height: 100vh;
+    height: 100vh;
+    max-height: 100vh;
     background: #0b1d3a;
     color: #cfd8ea;
     position: fixed;
@@ -221,15 +259,65 @@ const isActive = (path: string) => {
     left: 0;
     bottom: 0;
     overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
     z-index: 1040;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+.noc-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.noc-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.noc-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 4px;
+}
+
+.noc-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.45);
 }
 
 .noc-sidebar .brand {
+    position: sticky;
+    top: 0;
+    background: #0b1d3a;
+    z-index: 2;
     padding: 1rem 1.25rem;
     border-bottom: 1px solid #1c2f52;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: .65rem;
+    flex-shrink: 0;
+}
+
+.noc-sidebar .brand .btn-sidebar-close {
+    color: #cfd8ea;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    padding: 3px 8px;
+    line-height: 1;
+    transition: all .2s ease;
+}
+
+.noc-sidebar .brand .btn-sidebar-close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.noc-sidebar .nav {
+    padding-bottom: 2.5rem;
 }
 
 .noc-sidebar .brand img {
@@ -280,13 +368,31 @@ const isActive = (path: string) => {
     border-bottom: 1px solid #e3e7ee;
 }
 
+.noc-sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(7, 18, 40, 0.65);
+    backdrop-filter: blur(2px);
+    z-index: 1035;
+}
+
 @media (max-width: 991.98px) {
     .noc-sidebar {
         transform: translateX(-100%);
-        transition: transform .2s ease;
+        transition: transform .25s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1040;
+        box-shadow: none;
     }
     .noc-sidebar.show {
         transform: translateX(0);
+        box-shadow: 0 0 35px rgba(0, 0, 0, 0.55);
+    }
+    .noc-sidebar-backdrop.show {
+        display: block;
     }
     .noc-content {
         margin-left: 0;

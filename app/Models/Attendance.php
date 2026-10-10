@@ -13,9 +13,13 @@ class Attendance extends Model
         'check_in_at',
         'check_in_lat',
         'check_in_lng',
+        'check_in_photo_path',
+        'check_in_address',
         'check_out_at',
         'check_out_lat',
         'check_out_lng',
+        'check_out_photo_path',
+        'check_out_address',
         'notes',
     ];
 
@@ -45,5 +49,15 @@ class Attendance extends Model
     public function isCheckedOut(): bool
     {
         return $this->check_out_at !== null;
+    }
+
+    public function checkInPhotoUrl(): ?string
+    {
+        return $this->check_in_photo_path ? asset('storage/'.$this->check_in_photo_path) : null;
+    }
+
+    public function checkOutPhotoUrl(): ?string
+    {
+        return $this->check_out_photo_path ? asset('storage/'.$this->check_out_photo_path) : null;
     }
 }

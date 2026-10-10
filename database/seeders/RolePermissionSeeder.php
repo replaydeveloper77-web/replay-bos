@@ -82,6 +82,11 @@ class RolePermissionSeeder extends Seeder
             ['fieldvisit', 'fieldvisit.manage', 'Buat & Kelola Laporan Kunjungan Lapangan'],
 
             ['contract', 'contract.template.manage', 'Edit Redaksi Template PKWT/PKWTT'],
+            ['teknisi', 'teknisi.portal.view', 'Akses Portal Teknisi (lihat dashboard tugas work order & tiket lapangan)'],
+            ['package', 'package.change.view', 'Lihat Permohonan Upgrade/Downgrade Paket'],
+            ['package', 'package.change.create', 'Ajukan Permohonan Upgrade/Downgrade Paket'],
+            ['package', 'package.change.approve', 'Persetujuan (Approve/Reject) Upgrade/Downgrade Paket (Finance)'],
+            ['database', 'database.monitor', 'Monitoring Resource Database & Server (cPanel)'],
         ];
 
         foreach ($permissions as [$module, $slug, $name]) {
@@ -114,19 +119,19 @@ class RolePermissionSeeder extends Seeder
                 'slug' => 'noc-admin',
                 'name' => 'NOC Admin',
                 'description' => 'User management, role management, asset management, audit trail, dan konfigurasi notifikasi.',
-                'permissions' => ['dashboard.view', 'user.view', 'user.create', 'user.update', 'user.disable', 'role.view', 'audit.view', 'device.view', 'device.create', 'device.update', 'whatsapp.template.manage', 'customer.view', 'customer.manage', 'customer.activate', 'team.view', 'team.manage', 'coverage.manage', 'package.manage', 'quotation.view', 'quotation.create', 'quotation.manage', 'invoice.view', 'invoice.create', 'invoice.manage', 'asset.view', 'asset.manage', 'workorder.view', 'workorder.manage', 'attendance.view', 'attendance.manage', 'leave.view', 'leave.manage', 'fieldvisit.view', 'fieldvisit.manage', 'contract.template.manage'],
+                'permissions' => ['dashboard.view', 'user.view', 'user.create', 'user.update', 'user.disable', 'role.view', 'audit.view', 'device.view', 'device.create', 'device.update', 'whatsapp.template.manage', 'customer.view', 'customer.manage', 'customer.activate', 'team.view', 'team.manage', 'coverage.manage', 'package.manage', 'quotation.view', 'quotation.create', 'quotation.manage', 'invoice.view', 'invoice.create', 'invoice.manage', 'asset.view', 'asset.manage', 'workorder.view', 'workorder.manage', 'attendance.view', 'attendance.manage', 'leave.view', 'leave.manage', 'fieldvisit.view', 'fieldvisit.manage', 'contract.template.manage', 'package.change.view', 'package.change.create', 'database.monitor'],
             ],
             [
                 'slug' => 'marketing',
                 'name' => 'Marketing',
                 'description' => 'Input data pelanggan (prospek maupun yang sudah aktif/berlangganan), cek coverage area, dan buat surat penawaran. Semua hal yang sifatnya keuangan (invoice/closing/pembayaran) jadi tanggung jawab Finance — Marketing tidak bisa lihat menu Invoice.',
-                'permissions' => ['dashboard.view', 'customer.view', 'customer.create', 'quotation.view', 'quotation.create'],
+                'permissions' => ['dashboard.view', 'customer.view', 'customer.create', 'quotation.view', 'quotation.create', 'package.change.view', 'package.change.create'],
             ],
             [
                 'slug' => 'finance',
                 'name' => 'Finance',
                 'description' => 'Kelola data langganan pelanggan (paket & harga bulanan), lihat Surat Penawaran dari Marketing untuk diproses closing jadi invoice, generate tagihan bulanan, buat invoice upgrade paket, dan tandai status pembayaran invoice.',
-                'permissions' => ['dashboard.view', 'customer.view', 'customer.manage', 'quotation.view', 'invoice.view', 'invoice.create', 'invoice.manage'],
+                'permissions' => ['dashboard.view', 'customer.view', 'customer.manage', 'quotation.view', 'invoice.view', 'invoice.create', 'invoice.manage', 'package.change.view', 'package.change.approve'],
             ],
             [
                 'slug' => 'reseller',
@@ -139,6 +144,12 @@ class RolePermissionSeeder extends Seeder
                 'name' => 'HR',
                 'description' => 'Kelola data karyawan — tambah, edit, dan tandai resign. Tidak bisa akses ticket, pelanggan, atau modul keuangan.',
                 'permissions' => ['dashboard.view', 'employee.view', 'employee.create', 'employee.manage', 'attendance.view', 'attendance.manage', 'leave.view', 'leave.manage', 'contract.template.manage'],
+            ],
+            [
+                'slug' => 'teknisi',
+                'name' => 'Teknisi',
+                'description' => 'Portal khusus teknisi lapangan — penanganan work order, tiket perbaikan, dan laporan kunjungan.',
+                'permissions' => ['teknisi.portal.view'],
             ],
             [
                 'slug' => 'super-admin',

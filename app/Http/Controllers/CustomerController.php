@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ImportCustomerRequest;
 use App\Http\Requests\StoreCustomerIpAllocationRequest;
 use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\UpdateCustomerIpAllocationRequest;
@@ -10,14 +11,17 @@ use App\Models\Customer;
 use App\Models\CustomerIpAllocation;
 use App\Models\ServicePackage;
 use App\Services\AuditService;
+use App\Services\CustomerImportService;
 use App\Services\CustomerService;
 use Illuminate\Http\Request;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use RuntimeException;
 
 class CustomerController extends Controller
 {
     public function __construct(
         private CustomerService $customerService,
+        private CustomerImportService $customerImportService,
         private AuditService $auditService,
     ) {
     }
@@ -73,6 +77,62 @@ class CustomerController extends Controller
         $this->customerService->create($request->validated(), $request->user(), $request);
 
         return redirect()->route('customers.index')->with('status', 'Pelanggan berhasil ditambahkan.');
+    }
+
+    public function downloadTemplate(Request $request)
+    {
+        $this->authorize('create', Customer::class);
+
+        $format = strtolower((string) $request->query('format', 'xlsx'));
+
+        if ($format === 'csv') {
+            $csv = $this->customerImportService->generateCsvContent();
+
+            return response($csv, 200, [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="template_import_pelanggan.csv"',
+            ]);
+        }
+
+        $spreadsheet = $this->customerImportService->generateXlsxTemplate();
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, 'template_import_pelanggan.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    public function importSpreadsheet(ImportCustomerRequest $request)
+    {
+        $file = $request->file('file');
+        $defaultCategory = $request->input('default_category', 'HOME');
+
+        try {
+            $result = $this->customerImportService->import(
+                file: $file,
+                defaultCategory: $defaultCategory,
+                actor: $request->user(),
+                request: $request
+            );
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal memproses file spreadsheet: '.$e->getMessage());
+        }
+
+        $count = $result['success_count'];
+        $errors = $result['errors'];
+
+        if ($count === 0 && ! empty($errors)) {
+            return back()->with('error', 'Tidak ada pelanggan yang berhasil diimpor.')
+                ->with('import_errors', $errors);
+        }
+
+        $statusMsg = "Berhasil mengimpor {$count} data pelanggan beserta nomor layanannya secara otomatis.";
+
+        return redirect()->route('customers.index')
+            ->with('status', $statusMsg)
+            ->with('import_result', $result);
     }
 
     public function edit(Customer $customer)

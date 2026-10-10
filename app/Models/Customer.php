@@ -12,6 +12,10 @@ class Customer extends Model
 
     public const CATEGORIES = ['RESELLER', 'CORPORATE', 'HOME'];
 
+    public const SERVICE_PREFIX_RESELLER = '920210000';
+    public const SERVICE_PREFIX_CORPORATE = '920220000';
+    public const SERVICE_PREFIX_HOME = '920230000';
+
     protected $fillable = [
         'name',
         'category',
@@ -83,6 +87,11 @@ class Customer extends Model
     public function workOrders(): HasMany
     {
         return $this->hasMany(WorkOrder::class);
+    }
+
+    public function packageChangeRequests(): HasMany
+    {
+        return $this->hasMany(PackageChangeRequest::class);
     }
 
     public function hasHistory(): bool

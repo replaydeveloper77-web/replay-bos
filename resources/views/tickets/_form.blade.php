@@ -128,6 +128,19 @@
     </details>
 </div>
 
+@if ($ticket?->exists)
+    <div class="card border-0 bg-light p-3 mb-3">
+        <label class="form-label fw-medium d-flex align-items-center gap-1.5 text-success">
+            <i class="bi bi-file-earmark-check"></i> Catatan Penyelesaian & RFO (Reason For Outage)
+        </label>
+        <textarea name="resolution_note" class="form-control" rows="3" placeholder="Penyebab gangguan & tindakan perbaikan (RFO) yang akan dilihat client di link tracking...">{{ old('resolution_note', $ticket->resolution_note) }}</textarea>
+        <div class="form-text small text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            Catatan ini ditampilkan di link tracking pelanggan (mockup smartphone) sebagai laporan RFO resmi.
+        </div>
+    </div>
+@endif
+
 <script>
     (function () {
         var select = document.getElementById('customer-select');

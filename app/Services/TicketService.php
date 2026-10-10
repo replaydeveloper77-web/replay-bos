@@ -99,6 +99,7 @@ class TicketService
             'customer_id' => 'Pelanggan',
             'customer_name' => 'Customer/Pelanggan',
             'customer_phone' => 'No. WhatsApp',
+            'resolution_note' => 'Catatan Penyelesaian / RFO',
         ];
 
         $old = $ticket->only(array_keys($editableFields));
