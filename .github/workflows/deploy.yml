@@ -16,10 +16,10 @@ jobs:
         with:
           fetch-depth: 2 # Memungkinkan deteksi file yang berubah secara presisi
 
-      - name: 🟢 Setup Node.js (v20)
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: ⚡ Install NPM & Build Vite Assets
@@ -30,9 +30,9 @@ jobs:
       - name: 🚀 Sync Files to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
+          server: ${{ secrets.FTP_SERVER || '103.191.218.186' }}
+          username: ${{ secrets.FTP_USERNAME || secrets.FTP_USER || 'replaynetid' }}
+          password: ${{ secrets.FTP_PASSWORD || secrets.FTP_PASS }}
           server-dir: ${{ secrets.FTP_TARGET_DIR || 'replay-bos-staging/' }}
           protocol: ftp
           port: ${{ secrets.FTP_PORT || 21 }}
