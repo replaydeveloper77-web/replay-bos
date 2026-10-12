@@ -33,7 +33,7 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_TARGET_DIR || './' }}
+          server-dir: ${{ secrets.FTP_TARGET_DIR || 'replay-bos-staging/' }}
           protocol: ftp
           port: ${{ secrets.FTP_PORT || 21 }}
           dangerous-clean-slate: false
