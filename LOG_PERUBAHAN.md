@@ -45,6 +45,7 @@ Dokumen ini mencatat seluruh riwayat pembaruan, perbaikan, dan penyesuaian fitur
 | 35 | **Senin, 12 Oktober 2026 — 00:02:00 WIB** | Konfigurasi Filesystem Storage | Config / Security | Penonaktifan opsi bawaan `'serve' => false` pada disk local dan public (`config/filesystems.php`) untuk mencegah konflik routing asset storage dan mengoptimalkan kompatibilitas server cPanel. |
 | 36 | **Senin, 12 Oktober 2026 — 11:45:00 WIB** | Penambahan Fitur Tambah Role & Permission Super Admin | Feature & Security | Penambahan tombol aksi dan modal Tambah Role (auto-slug & pilih permission awal), modal Tambah Permission (modul, slug, assign ke role), tab navigasi Daftar Permission, serta otorisasi Policy untuk Super Admin. |
 | 37 | **Senin, 12 Oktober 2026 — 12:00:00 WIB** | Perbaikan Modal Tambah Role & Scrolling Permission | UI/UX & Bugfix | Perbaikan bug checklist hak akses hilang (konflik Tailwind `.collapse`) dan perbaikan modal scrollable sehingga header-footer sticky serta penambahan quick search permission. |
+| 38 | **Senin, 12 Oktober 2026 — 12:32:00 WIB** | CI/CD GitHub Actions Auto-Deploy ke cPanel | DevOps / Automation | Pembuatan pipeline otomatis `.github/workflows/deploy.yml` (build aset Vite & sync incremental FTP) serta template `.cpanel.yml` agar cPanel selalu sinkron otomatis saat push. |
 
 ---
 
@@ -818,6 +819,28 @@ Dokumen ini mencatat seluruh riwayat pembaruan, perbaikan, dan penyesuaian fitur
 
 ---
 
+#### ⏰ Pukul 12:32:00 WIB — Konfigurasi CI/CD Auto-Deploy & Sinkronisasi Real-Time cPanel
+- **Latar Belakang & Kebutuhan:**
+  - Pengembang memerlukan alur kerja yang efisien untuk sinkronisasi kode secara otomatis antara local environment dan cPanel hosting tanpa perlu mengunggah arsip zip secara manual setiap kali terdapat perubahan kode.
+  - Menyiapkan alur live coding publik langsung via tunnel ngrok dan auto-deployment via GitHub Actions.
+- **File Terkait:**
+  1. [`.github/workflows/deploy.yml`](file:///home/prtmagum/Documents/REPLAY%20NET%20ID/LOCAL/replay-bos-prod/replay-noc/.github/workflows/deploy.yml)
+  2. [`.cpanel.yml`](file:///home/prtmagum/Documents/REPLAY%20NET%20ID/LOCAL/replay-bos-prod/replay-noc/.cpanel.yml)
+  3. [`README.md`](file:///home/prtmagum/Documents/REPLAY%20NET%20ID/LOCAL/replay-bos-prod/replay-noc/README.md)
+- **Tindakan Teknis & Solusi:**
+  1. **GitHub Actions Workflow CI/CD (`.github/workflows/deploy.yml`):**
+     - Otomasi kompilasi aset frontend Vite (`npm ci && npm run build`) langsung di cloud GitHub runner dengan Node.js v20.
+     - Menggunakan `SamKirkland/FTP-Deploy-Action@v4.3.5` untuk transfer file otomatis ke server cPanel menggunakan kredensial rahasia (`FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_TARGET_DIR`).
+     - Proteksi file sensitif server: mengecualikan `.env`, `node_modules/`, `storage/logs/`, `storage/app/public/` (foto absensi & upload tidak akan terhapus/tertimpa), serta dependensi `vendor/` (karena telah disediakan via `vendor.zip`).
+  2. **Template Deployment Native (`.cpanel.yml`):**
+     - Menyediakan konfigurasi deployment fallback untuk fitur bawaan *cPanel Git™ Version Control*.
+  3. **Live Coding Instan:**
+     - Mengintegrasikan petunjuk penggunaan live tunnel ngrok (`php artisan serve` + `ngrok http 8000`) untuk preview langsung via smartphone / internet saat pengkodean lokal berlangsung.
+- **Hasil Verifikasi:**
+  - File workflow valid dan siap dieksekusi secara otomatis setiap push ke branch `main`.
+
+---
+
 ## 📌 Status Sistem Saat Ini
 
 - **Framework Backend:** Laravel 11 (PHP 8.2+)
@@ -855,4 +878,5 @@ Dokumen ini mencatat seluruh riwayat pembaruan, perbaikan, dan penyesuaian fitur
   - ✅ Endpoint Diagnostik & Perbaikan `/storage-link` dengan Auto-Create Subfolder & Status Health Check aktif
   - ✅ Rute Fallback Direct Serving `/storage/{path}` Jaminan Anti-Broken Image di cPanel Hosting aktif
   - ✅ Paket Deployment `vendor.zip` Siap Upload Ekstraksi cPanel Hosting aktif
+  - ✅ CI/CD GitHub Actions Auto-Deploy cPanel (`.github/workflows/deploy.yml`) & Template `.cpanel.yml` aktif
 

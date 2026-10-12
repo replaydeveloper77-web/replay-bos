@@ -203,6 +203,17 @@ Bagi instalasi di server shared hosting atau cPanel yang **tidak memiliki akses 
    - Halaman akan secara otomatis membuat direktori foto, menguji izin tulis folder, dan menyambungkan symlink storage.
    - *Catatan:* Jika hosting Anda melarang fungsi symlink native, rute fallback `/storage/{path}` akan otomatis aktif sehingga gambar tetap tampil sempurna 100%.
 
+### ⚡ Sinkronisasi Otomatis Setiap Push (GitHub Actions CI/CD)
+Proyek ini telah dilengkapi workflow otomatis [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). Setiap kali Anda melakukan `git push origin main`, GitHub Actions akan otomatis mengompilasi aset Vite dan mentransfer file ke cPanel:
+
+1. Buka repo Anda di GitHub: **Settings** ➜ **Secrets and variables** ➜ **Actions**.
+2. Tambahkan **Repository secrets** berikut:
+   - `FTP_SERVER`: Host/IP FTP hosting (misal: `ftp.domain-anda.com` atau IP server cPanel).
+   - `FTP_USERNAME`: Username akun FTP cPanel.
+   - `FTP_PASSWORD`: Password akun FTP cPanel.
+   - `FTP_TARGET_DIR`: *(Opsional)* Folder tujuan di cPanel (default: `./` atau misal: `public_html/`).
+3. Setiap kali Anda menjalankan `git push origin main`, proses build & transfer akan berjalan otomatis dalam 20–30 detik!
+
 ---
 
 ## 🧪 Pengujian Sistem (Automated Tests)
