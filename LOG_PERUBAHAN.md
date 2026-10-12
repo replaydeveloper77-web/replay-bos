@@ -1,6 +1,6 @@
 # Log Perubahan dan Update Sistem Replay NOC (Replay BOS)
 
-Dokumen ini mencatat seluruh riwayat pembaruan, perbaikan, dan penyesuaian fitur pada aplikasi **Replay NOC** untuk periode kemarin (**Selasa, 06 Oktober 2026**) dan hari ini (**Rabu, 07 Oktober 2026**).
+Dokumen ini mencatat seluruh riwayat pembaruan, perbaikan, dan penyesuaian fitur pada aplikasi **Replay NOC** secara berkala dari **Selasa, 06 Oktober 2026** hingga **Senin, 12 Oktober 2026** (Update Terakhir: 12 Oktober 2026).
 
 ---
 
@@ -29,6 +29,7 @@ Dokumen ini mencatat seluruh riwayat pembaruan, perbaikan, dan penyesuaian fitur
 | 19 | **Kamis, 08 Oktober 2026 — 12:30:00 WIB** | Setup Akses Publik / Ngrok Tunnel | DevOps / Testing | Konfigurasi Trust Proxies Laravel & aktivasi tunnel ngrok untuk pengujian sementara fitur tiket & sharelink oleh karyawan via internet/HP. |
 | 20 | **Jumat, 09 Oktober 2026 — 09:40:00 WIB** | Standarisasi Nomor Layanan Client | Standardization | Pembaruan format nomor layanan pelanggan menjadi angka murni: `920210000[urut]` (Reseller), `920220000[urut]` (Corporate), dan `920230000[urut]` (Home). |
 | 21 | **Jumat, 09 Oktober 2026 — 10:35:00 WIB** | Portal Baru Teknisi & Registrasi Role | Feature & Role | Penambahan Portal Teknisi Lapangan (`/portal-teknisi`), menu sidebar, permission `teknisi.portal.view`, serta role baru `Teknisi` di halaman Roles & Permissions yang siap dikelola mandiri. |
+| 22 | **Jumat, 09 Oktober 2026 — 11:15:00 WIB** | Perbaikan Scrollbar & Responsivitas Sidebar | UI/UX & Layout | Pemasangan custom sleek scrollbar vertikal 100vh terisolasi dan header brand sticky agar menu bawah mudah diakses. |
 | 23 | **Jumat, 09 Oktober 2026 — 11:22:00 WIB** | Fitur Tutup / Kembalikan Sidebar Mobile | Mobile UX | Eliminasi tombol X sesuai revisi; penutupan sidebar mobile menggunakan backdrop overlay gelap (klik area luar), shortcut Escape, dan auto-close navigasi. |
 | 24 | **Jumat, 09 Oktober 2026 — 11:40:00 WIB** | Menu Upgrade/Downgrade & Persetujuan Finance | Feature & Automation | Penambahan modul Upgrade/Downgrade paket, formulir pengajuan, approval Finance, update paket customer, dan auto-generate nomor Work Order Upgrade otomatis. |
 | 25 | **Jumat, 09 Oktober 2026 — 12:45:00 WIB** | Penyempurnaan Form Upgrade/Downgrade | UI/UX & Enhancement | Pemilihan client difilter berdasarkan kategori (Reseller, Corporate, Home), pengetikan bebas paket baru tujuan dengan saran autocomplete, serta penghapusan input biaya langganan baru dari form pengajuan. |
@@ -39,6 +40,9 @@ Dokumen ini mencatat seluruh riwayat pembaruan, perbaikan, dan penyesuaian fitur
 | 30 | **Jumat, 09 Oktober 2026 — 16:45:00 WIB** | Detail Absensi: Foto Live, Watermark Logo & Timestamp Replay, Alamat & GPS | Feature & Security | Penambahan sistem absensi mandiri lengkap: foto selfie langsung (live camera) dengan watermark resmi Replay BOS (logo Replay, waktu WIB detik real-time, badge check-in/out, nama & NIK karyawan, koordinat GPS, dan alamat), tersimpan di DB & storage, preview thumbnail, dan modal lightbox. |
 | 31 | **Jumat, 09 Oktober 2026 — 17:05:00 WIB** | Portal Karyawan / Lightbox Foto Absensi | Frontend Bugfix | Perbaikan error `TypeError: w.value.lat.toFixed is not a function` saat membuka foto absensi di Portal Karyawan melalui fungsi `formatCoordinate()` yang aman untuk tipe data string maupun number dari Eloquent cast. |
 | 32 | **Minggu, 11 Oktober 2026 — 01:25:00 WIB** | Redesign Modal Absensi Check-in & Standardisasi Watermark Resmi Replay | UI/UX & Security | Redesign modal absensi menjadi clean enterprise minimalis, live camera indicator, eliminasi total fitur upload file/galeri lokal, serta standardisasi watermark resmi Replay (logo, PT. Replay Inti Media, timestamp WIB, alamat, GPS). |
+| 33 | **Minggu, 11 Oktober 2026 — 23:36:00 WIB** | Deployment Hosting / Vendor Package | DevOps / Deployment | Pembuatan arsip `vendor.zip` (43 MB) di root project untuk memfasilitasi migrasi & deployment langsung ke cPanel hosting tanpa Composer CLI. |
+| 34 | **Minggu, 11 Oktober 2026 — 23:54:00 WIB** | Symlink Storage & Fallback Foto cPanel | Infrastructure & Bugfix | Peningkatan endpoint `/storage-link` (auto-create subfolder, permission check, feedback HTML informatif) dan penambahan route fallback `/storage/{path}` agar foto absensi & profil karyawan tetap tampil 100% pada hosting yang membatasi symlink. |
+| 35 | **Senin, 12 Oktober 2026 — 00:02:00 WIB** | Konfigurasi Filesystem Storage | Config / Security | Penonaktifan opsi bawaan `'serve' => false` pada disk local dan public (`config/filesystems.php`) untuk mencegah konflik routing asset storage dan mengoptimalkan kompatibilitas server cPanel. |
 
 ---
 
@@ -624,41 +628,6 @@ Dokumen ini mencatat seluruh riwayat pembaruan, perbaikan, dan penyesuaian fitur
 
 ---
 
-## 📌 Status Sistem Saat Ini
-
-- **Framework Backend:** Laravel 11 (PHP 8.2+)
-- **Database:** MariaDB / MySQL
-- **Frontend Hybrid:** Blade View + Bootstrap 5 + Tailwind CSS v4 + Vue 3 Component
-- **Status Fitur Tiket, Client, Portal & Resource:**
-  - ✅ Pagination 10 data aktif
-  - ✅ Format nomor tiket `CP-`, `RS-`, `RH-` aktif
-  - ✅ Format nomor layanan client murni angka (`92021...` Reseller, `92022...` Corporate, `92023...` Home) aktif & terselaras rapi
-  - ✅ Command Artisan Penyelaras Nomor Layanan (`customers:align-service-numbers`) aktif
-  - ✅ Form Surat Penawaran: Input Harga Satuan Readonly & Format Titik Ribuan (`3.000.000`) aktif
-  - ✅ Modul Data Karyawan & Portal: Label BPJS Ketenagakerjaan & BPJS Kesehatan seragam aktif
-  - ✅ Detail Absensi Mandiri: Foto Selfie Live, Watermark Logo Replay & Timestamp WIB, Alamat & GPS aktif
-  - ✅ Portal Karyawan & Portal Reseller aktif
-  - ✅ Portal Teknisi Lapangan (`/portal-teknisi`) aktif
-  - ✅ Role Baru 'Teknisi' terdaftar di Roles & Permissions (siap dikelola mandiri)
-  - ✅ Sidebar Scrolling Vertikal Aktif (seluruh menu bawah mudah diakses)
-  - ✅ Modul Pengajuan Upgrade/Downgrade Paket & Approval Finance aktif
-  - ✅ Menu Monitoring Resource Database cPanel (`/resources`) aktif
-  - ✅ Counter status `HANDLE` dan `CLOSED` aktif
-  - ✅ Tombol hapus tiket (trash merah) aktif
-  - ✅ Tombol hapus pelanggan aktif
-  - ✅ Template WhatsApp auto-fill aktif dan terverifikasi 100% normal
-  - ✅ Fitur Import Spreadsheet Pelanggan & Nomor Layanan Otomatis aktif dan terverifikasi 100% normal
-  - ✅ Progress Update Perbaikan dengan Lampiran Foto di Timeline aktif dan terverifikasi 100% normal
-  - ✅ Tampilan Link Client Mockup Handphone Real-Time aktif dan terverifikasi 100% normal
-  - ✅ Link Tracking Client Permanen (Tidak Kadaluarsa) & Sajian Laporan RFO aktif dan terverifikasi 100% normal
-  - ✅ Anti-Overflow & Word-Wrap Responsif pada Seluruh Card Teks Sharelink aktif dan terverifikasi 100% normal
-  - ✅ Text Alignment Rata Kiri Presisi pada Seluruh Balon Catatan & RFO Timeline aktif dan terverifikasi 100% normal
-  - ✅ Fitur Tutup / Kembalikan Sidebar Mobile (Tombol X & Backdrop Overlay Klik-Luar) aktif dan terverifikasi 100% normal
-  - ✅ Modal Lightbox Foto Absensi Karyawan Bebas Error JavaScript (Format Koordinat GPS String/Number Aman) aktif
-  - ✅ Redesign UI/UX Modal Absensi Check-in & Standardisasi Watermark Resmi Replay (Live Camera Wajib & Tanpa Upload Galeri) aktif
-
----
-
 #### ⏰ Pukul 17:05:00 WIB — Perbaikan Error Pembukaan Foto Hasil Absensi (toFixed on String)
 - **Latar Belakang & Gejala Error:**
   - Saat karyawan mengklik thumbnail foto absensi di halaman Portal Karyawan (`/portal-karyawan`), modal lightbox gagal terbuka dan browser console menampilkan error:
@@ -683,6 +652,8 @@ Dokumen ini mencatat seluruh riwayat pembaruan, perbaikan, dan penyesuaian fitur
   - Modal lightbox foto absensi kini dapat dibuka lancar dengan preview gambar resolusi penuh, alamat lengkap, dan koordinat GPS rapi.
 
 ---
+
+### 5. Minggu, 11 Oktober 2026
 
 #### ⏰ Pukul 01:25:00 WIB — Redesign UI/UX Modal Absensi Check-in & Standardisasi Watermark Resmi Replay
 - **Latar Belakang & Kebutuhan:**
@@ -719,4 +690,98 @@ Dokumen ini mencatat seluruh riwayat pembaruan, perbaikan, dan penyesuaian fitur
   4. **Kompilasi & Pengujian:**
      - Aset frontend Vite berhasil dikompilasi ulang (`npm run build`).
      - Seluruh 48 automated test PHPUnit lulus 100% (216 assertions).
+
+---
+
+#### ⏰ Pukul 23:36:00 WIB — Pembuatan Bundle Arsip vendor.zip untuk Kesiapan Deployment cPanel Hosting
+- **Latar Belakang & Kebutuhan:**
+  - Persiapan deployment dan sinkronisasi source code aplikasi Replay NOC ke server production / cPanel hosting yang tidak memiliki akses terminal SSH atau Composer CLI.
+  - Memastikan seluruh dependensi PHP (`vendor/`) telah terkompilasi dan terpaket lengkap secara utuh tanpa risiko file korup atau kegagalan transfer file via FTP/File Manager cPanel akibat ribuan file kecil terpisah.
+- **File Terkait:**
+  - [`vendor.zip`](file:///home/prtmagum/Documents/REPLAY%20NET%20ID/LOCAL/replay-bos-prod/replay-noc/vendor.zip) (Arsip berukuran ~43 MB berisi folder `vendor/` lengkap)
+- **Tindakan Teknis:**
+  - Pembuatan arsip kompresi `vendor.zip` yang mencakup seluruh package Laravel 11, dependencies PHP Composer, autoload files, dan class mapping terverifikasi.
+  - Menjadikan proses instalasi di cPanel hosting efisien: pengguna hanya perlu mengunggah 1 file zip dan mengekstraknya langsung melalui cPanel File Manager dalam hitungan detik.
+- **Hasil:**
+  - Arsip `vendor.zip` siap di-deploy langsung ke hosting production.
+
+---
+
+#### ⏰ Pukul 23:54:00 WIB — Peningkatan Keandalan Symlink Storage (/storage-link) & Rute Fallback Foto cPanel
+- **Latar Belakang & Masalah:**
+  - Pada lingkungan production cPanel hosting / shared hosting, pembuatan symbolic link (`storage:link`) kerap mengalami kendala atau dibatasi oleh provider hosting (fungsi PHP `symlink()` dinonaktifkan, atau symlink putus saat restrukturisasi root directory ke `public_html`).
+  - Hal ini menyebabkan foto profil karyawan (`storage/employees/photos`) dan foto absensi kehadiran (`storage/attendances`) berpotensi gagal dimuat (broken image / HTTP 404).
+  - Selain itu, subfolder penyimpanan di dalam `storage/app/public` belum tentu otomatis tersedia atau memiliki izin tulis (*write permission*) yang benar setelah proses migrasi.
+- **File Terkait:**
+  - [`routes/web.php`](file:///home/prtmagum/Documents/REPLAY%20NET%20ID/LOCAL/replay-bos-prod/replay-noc/routes/web.php)
+- **Tindakan Teknis & Solusi:**
+  1. **Peningkatan Fungsionalitas Endpoint `/storage-link`:**
+     - Menambahkan pengecekan dan pembuatan otomatis direktori target `storage_path('app/public')` dengan permission `0775`.
+     - Mengotomatiskan pembuatan subfolder kritis `employees/photos` dan `attendances` dengan permission `0775` jika belum ada.
+     - Membersihkan symlink lama jika berstatus broken (`is_link($link) -> @unlink($link)`).
+     - Menjalankan `Artisan::call('storage:link')` dengan error handling terstruktur dan mekanisme fallback native `symlink($target, $link)`.
+     - Menyediakan audit status ganda: verifikasi koneksi `public/storage` dan pengujian hak akses tulis (`is_writable($target)`).
+     - Menampilkan respon visual antarmuka HTML rapi dan modern yang melaporkan seluruh status pemeriksaan serta tombol langsung kembali ke Portal Karyawan.
+  2. **Penambahan Rute Fallback Direct-Serving (`Route::get('/storage/{path}')`):**
+     - Menambahkan route handling `Route::get('/storage/{path}', ...)->where('path', '.*')`.
+     - Jika web server hosting tidak mendukung symlink atau symlink diblokir, setiap permintaan URL file `/storage/...` akan dilayani langsung oleh Laravel via `response()->file($filePath)` dari `storage_path('app/public/' . $path)`.
+     - Solusi ini memberikan jaminan 100% foto profil dan foto absensi tetap tampil sempurna di browser pengguna tanpa ketergantungan pada izin symlink hosting.
+- **Hasil Verifikasi:**
+  - Endpoint `/storage-link` memberikan diagnostik status storage yang jelas dan dapat diakses tim kapan saja.
+  - Gambar foto karyawan dan absensi terbukti dapat diakses baik melalui jalur symlink maupun melalui route direct-serving fallback.
+
+---
+
+### 6. Senin, 12 Oktober 2026
+
+#### ⏰ Pukul 00:02:00 WIB — Penonaktifan Opsi Bawaan Serve Storage pada Disk Filesystem (config/filesystems.php)
+- **Latar Belakang & Kebutuhan:**
+  - Pada konfigurasi bawaan Laravel 11/12, opsi `'serve' => true` pada driver disk `local` dan `public` mengaktifkan fitur internal framework untuk melayani file privat/publik.
+  - Untuk mencegah duplikasi alur serving, menghindari potensi konflik dengan rute fallback kustom `/storage/{path}`, serta mengoptimalkan performa web server production/cPanel secara bersih, opsi bawaan tersebut dinonaktifkan secara eksplisit.
+- **File Terkait:**
+  - [`config/filesystems.php`](file:///home/prtmagum/Documents/REPLAY%20NET%20ID/LOCAL/replay-bos-prod/replay-noc/config/filesystems.php)
+- **Tindakan Teknis:**
+  - Mengubah `'serve' => true` menjadi `'serve' => false` pada disk `local` (`storage_path('app/private')`).
+  - Menambahkan konfigurasi eksplisit `'serve' => false` pada disk `public` (`storage_path('app/public')`).
+- **Hasil Verifikasi:**
+  - Akses file publik diatur secara penuh dan presisi melalui rute web Laravel terpadu dan symlink statis web server tanpa interferensi middleware bawaan serve disk.
+  - Seluruh 48 automated feature & unit test Laravel lulus 100% tanpa regresi.
+
+---
+
+## 📌 Status Sistem Saat Ini
+
+- **Framework Backend:** Laravel 11 (PHP 8.2+)
+- **Database:** MariaDB / MySQL
+- **Frontend Hybrid:** Blade View + Bootstrap 5 + Tailwind CSS v4 + Vue 3 Component
+- **Status Fitur Tiket, Client, Portal, Storage & Resource:**
+  - ✅ Pagination 10 data aktif
+  - ✅ Format nomor tiket `CP-`, `RS-`, `RH-` aktif
+  - ✅ Format nomor layanan client murni angka (`92021...` Reseller, `92022...` Corporate, `92023...` Home) aktif & terselaras rapi
+  - ✅ Command Artisan Penyelaras Nomor Layanan (`customers:align-service-numbers`) aktif
+  - ✅ Form Surat Penawaran: Input Harga Satuan Readonly & Format Titik Ribuan (`3.000.000`) aktif
+  - ✅ Modul Data Karyawan & Portal: Label BPJS Ketenagakerjaan & BPJS Kesehatan seragam aktif
+  - ✅ Detail Absensi Mandiri: Foto Selfie Live, Watermark Logo Replay & Timestamp WIB, Alamat & GPS aktif
+  - ✅ Portal Karyawan & Portal Reseller aktif
+  - ✅ Portal Teknisi Lapangan (`/portal-teknisi`) aktif
+  - ✅ Role Baru 'Teknisi' terdaftar di Roles & Permissions (siap dikelola mandiri)
+  - ✅ Sidebar Scrolling Vertikal Aktif (seluruh menu bawah mudah diakses)
+  - ✅ Modul Pengajuan Upgrade/Downgrade Paket & Approval Finance aktif
+  - ✅ Menu Monitoring Resource Database cPanel (`/resources`) aktif
+  - ✅ Counter status `HANDLE` dan `CLOSED` aktif
+  - ✅ Tombol hapus tiket (trash merah) aktif
+  - ✅ Tombol hapus pelanggan aktif
+  - ✅ Template WhatsApp auto-fill aktif dan terverifikasi 100% normal
+  - ✅ Fitur Import Spreadsheet Pelanggan & Nomor Layanan Otomatis aktif dan terverifikasi 100% normal
+  - ✅ Progress Update Perbaikan dengan Lampiran Foto di Timeline aktif dan terverifikasi 100% normal
+  - ✅ Tampilan Link Client Mockup Handphone Real-Time aktif dan terverifikasi 100% normal
+  - ✅ Link Tracking Client Permanen (Tidak Kadaluarsa) & Sajian Laporan RFO aktif dan terverifikasi 100% normal
+  - ✅ Anti-Overflow & Word-Wrap Responsif pada Seluruh Card Teks Sharelink aktif dan terverifikasi 100% normal
+  - ✅ Text Alignment Rata Kiri Presisi pada Seluruh Balon Catatan & RFO Timeline aktif dan terverifikasi 100% normal
+  - ✅ Fitur Tutup / Kembalikan Sidebar Mobile (Tombol X & Backdrop Overlay Klik-Luar) aktif dan terverifikasi 100% normal
+  - ✅ Modal Lightbox Foto Absensi Karyawan Bebas Error JavaScript (Format Koordinat GPS String/Number Aman) aktif
+  - ✅ Redesign UI/UX Modal Absensi Check-in & Standardisasi Watermark Resmi Replay (Live Camera Wajib & Tanpa Upload Galeri) aktif
+  - ✅ Endpoint Diagnostik & Perbaikan `/storage-link` dengan Auto-Create Subfolder & Status Health Check aktif
+  - ✅ Rute Fallback Direct Serving `/storage/{path}` Jaminan Anti-Broken Image di cPanel Hosting aktif
+  - ✅ Paket Deployment `vendor.zip` Siap Upload Ekstraksi cPanel Hosting aktif
 

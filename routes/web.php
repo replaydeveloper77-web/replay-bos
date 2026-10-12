@@ -50,24 +50,69 @@ Route::get('/p/{token}', [PublicTicketController::class, 'show'])
 Route::get('/storage-link', function () {
     $target = storage_path('app/public');
     $link = public_path('storage');
+    $results = [];
 
-    if (file_exists($link) || is_link($link)) {
-        if (is_link($link)) {
-            @unlink($link);
+    // 1. Pastikan folder target ada & siap
+    if (!file_exists($target)) {
+        @mkdir($target, 0775, true);
+        $results[] = "Membuat folder target: {$target}";
+    }
+
+    // Pastikan subfolder penting siap
+    $subfolders = ['employees/photos', 'attendances'];
+    foreach ($subfolders as $sub) {
+        $subPath = $target . '/' . $sub;
+        if (!file_exists($subPath)) {
+            @mkdir($subPath, 0775, true);
+            $results[] = "Membuat subfolder: {$sub}";
         }
     }
 
+    // 2. Bersihkan symlink lama jika broken
+    if (is_link($link)) {
+        @unlink($link);
+        $results[] = "Menghapus symlink lama pada {$link}";
+    }
+
+    // 3. Eksekusi pembuatan symlink
     try {
         \Illuminate\Support\Facades\Artisan::call('storage:link');
-        return 'Storage link berhasil dibuat via Artisan: ' . nl2br(e(\Illuminate\Support\Facades\Artisan::output()));
+        $artisanOutput = trim(\Illuminate\Support\Facades\Artisan::output());
+        $results[] = "Artisan storage:link output: " . ($artisanOutput ?: 'Berhasil');
     } catch (\Throwable $e) {
-        if (!file_exists($link)) {
-            @symlink($target, $link);
-            return 'Storage link berhasil dibuat via symlink native: ' . $link . ' -> ' . $target;
+        $results[] = "Artisan gagal: " . $e->getMessage();
+        if (!file_exists($link) && function_exists('symlink')) {
+            $symlinkResult = @symlink($target, $link);
+            $results[] = $symlinkResult ? "Native symlink berhasil: {$link} -> {$target}" : "Native symlink gagal dibuat.";
         }
-        return 'Pesan: ' . $e->getMessage();
     }
+
+    // 4. Verifikasi status
+    $linkExists = is_link($link) || file_exists($link);
+    $results[] = "Status public/storage: " . ($linkExists ? "TERHUBUNG (OK)" : "TIDAK TERHUBUNG (Gagal symlink)");
+    $results[] = "Izin tulis target ({$target}): " . (is_writable($target) ? "BISA MENYIMPAN GAMBAR (Writable)" : "TIDAK BISA MENYIMPAN (Read-only, ubah permission storage ke 755/775!)");
+
+    $outputHtml = "<div style='font-family:sans-serif; max-width:650px; margin:40px auto; padding:24px; border:1px solid #e2e8f0; border-radius:10px; background:#fff; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);'>";
+    $outputHtml .= "<h2 style='margin-top:0; color:#1e293b;'>Status Storage & Upload Foto</h2>";
+    $outputHtml .= "<ul style='line-height:1.8; color:#334155;'>";
+    foreach ($results as $res) {
+        $outputHtml .= "<li>" . e($res) . "</li>";
+    }
+    $outputHtml .= "</ul>";
+    $outputHtml .= "<p style='margin-top:20px;'><a href='/portal-karyawan' style='display:inline-block; background:#4f46e5; color:#fff; text-decoration:none; padding:10px 20px; border-radius:6px; font-weight:600;'>Buka Portal Karyawan</a></p>";
+    $outputHtml .= "</div>";
+
+    return response($outputHtml);
 });
+
+// Fallback jika symlink diblokir oleh cPanel hosting agar gambar tetap tampil 100%
+Route::get('/storage/{path}', function ($path) {
+    $filePath = storage_path('app/public/' . $path);
+    if (!file_exists($filePath)) {
+        abort(404);
+    }
+    return response()->file($filePath);
+})->where('path', '.*');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
