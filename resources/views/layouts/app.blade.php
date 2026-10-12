@@ -111,6 +111,12 @@
             }
             .noc-content { margin-left: 0; }
         }
+        /* Fix Bootstrap Collapse & Accordion visibility conflict with Tailwind CSS v4 */
+        .collapse.show,
+        .collapsing,
+        .accordion-collapse.show {
+            visibility: visible !important;
+        }
     </style>
     @stack('styles')
 </head>

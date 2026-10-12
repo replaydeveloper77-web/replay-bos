@@ -130,7 +130,7 @@ Replay BOS dirancang dengan standar arsitektur clean and secure:
 | **Database** | **MariaDB / MySQL 8.0+** | Transaksi ACID, relasi foreign key, optimasi index query |
 | **Asset Bundler** | **Vite 7.0 + Rollup** | Hot Module Replacement (HMR) super cepat & optimized production build |
 | **Dokumen & Media** | **DomPDF & HTML5 Canvas** | Generate surat penawaran PDF & burned-in image watermark |
-| **Testing** | **PHPUnit 11** | 48 automated feature & unit tests (216 assertions passed) |
+| **Testing** | **PHPUnit 11** | 55 automated feature & unit tests (251 assertions passed) |
 
 ---
 
@@ -223,10 +223,11 @@ PASS  Tests\Feature\DatabaseResourceTest
 PASS  Tests\Feature\PackageChangeRequestTest
 PASS  Tests\Feature\PortalTeknisiTest
 PASS  Tests\Feature\QuotationUnitPriceTest
+PASS  Tests\Feature\RoleAndPermissionManagementTest
 PASS  Tests\Feature\TicketProgressUpdateTest
 
-Tests:    48 passed (216 assertions)
-Duration: 3.92s
+Tests:    55 passed (251 assertions)
+Duration: 4.82s
 ```
 
 ---

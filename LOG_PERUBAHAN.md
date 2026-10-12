@@ -44,6 +44,7 @@ Dokumen ini mencatat seluruh riwayat pembaruan, perbaikan, dan penyesuaian fitur
 | 34 | **Minggu, 11 Oktober 2026 — 23:54:00 WIB** | Symlink Storage & Fallback Foto cPanel | Infrastructure & Bugfix | Peningkatan endpoint `/storage-link` (auto-create subfolder, permission check, feedback HTML informatif) dan penambahan route fallback `/storage/{path}` agar foto absensi & profil karyawan tetap tampil 100% pada hosting yang membatasi symlink. |
 | 35 | **Senin, 12 Oktober 2026 — 00:02:00 WIB** | Konfigurasi Filesystem Storage | Config / Security | Penonaktifan opsi bawaan `'serve' => false` pada disk local dan public (`config/filesystems.php`) untuk mencegah konflik routing asset storage dan mengoptimalkan kompatibilitas server cPanel. |
 | 36 | **Senin, 12 Oktober 2026 — 11:45:00 WIB** | Penambahan Fitur Tambah Role & Permission Super Admin | Feature & Security | Penambahan tombol aksi dan modal Tambah Role (auto-slug & pilih permission awal), modal Tambah Permission (modul, slug, assign ke role), tab navigasi Daftar Permission, serta otorisasi Policy untuk Super Admin. |
+| 37 | **Senin, 12 Oktober 2026 — 12:00:00 WIB** | Perbaikan Modal Tambah Role & Scrolling Permission | UI/UX & Bugfix | Perbaikan bug checklist hak akses hilang (konflik Tailwind `.collapse`) dan perbaikan modal scrollable sehingga header-footer sticky serta penambahan quick search permission. |
 
 ---
 
@@ -784,6 +785,37 @@ Dokumen ini mencatat seluruh riwayat pembaruan, perbaikan, dan penyesuaian fitur
      - Dibuatkan pengujian menyeluruh pada `tests/Feature/RoleAndPermissionManagementTest.php` (7 test baru, 35 assertions).
      - Seluruh **55 automated tests (251 assertions) lulus 100%**.
 
+
+---
+
+#### ⏰ Pukul 12:00:00 WIB — Perbaikan Modal Tambah Role & Scrolling Permission (Fix Konflik Tailwind & Bootstrap)
+- **Latar Belakang & Kendala:**
+  - Saat membuka modal **Tambah Role Baru**, opsi checklist hak akses per modul tidak tampil / menghilang saat modul diklik, serta modal tidak dapat di-scroll ke bawah untuk melihat hak akses lainnya maupun tombol simpan.
+  - **Akar Penyebab 1 (Konflik CSS Tailwind v4):** Tailwind CSS v4 mendefinisikan `.collapse { visibility: collapse; }`. Pada Bootstrap 5, accordion item menggunakan kelas `.accordion-collapse.collapse.show`. Walaupun Bootstrap menambahkan `display: block`, properti `visibility: collapse` dari Tailwind tetap berlaku sehingga seluruh isi checkbox di dalam accordion menjadi tak kasat mata (tersembunyi).
+  - **Akar Penyebab 2 (Struktur DOM Modal Scrollable):** Pada Bootstrap 5 `.modal-dialog-scrollable`, elemen `.modal-body` harus merupakan anak langsung dari `.modal-content` agar flexbox scrolling vertikal aktif. Elemen form yang membungkus `.modal-header`, `.modal-body`, dan `.modal-footer` di dalam `.modal-content` merusak batasan tinggi modal, mengakibatkan modal memanjang ke bawah (~1500px) dan tombol aksi footer terpotong/hilang dari viewport layar.
+- **File Terkait:**
+  1. [`resources/views/layouts/app.blade.php`](file:///home/prtmagum/Documents/REPLAY%20NET%20ID/LOCAL/replay-bos-prod/replay-noc/resources/views/layouts/app.blade.php)
+  2. [`resources/views/roles/index.blade.php`](file:///home/prtmagum/Documents/REPLAY%20NET%20ID/LOCAL/replay-bos-prod/replay-noc/resources/views/roles/index.blade.php)
+- **Tindakan Teknis & Solusi:**
+  1. **Override CSS Global:** Menambahkan aturan CSS di `layouts/app.blade.php`:
+     ```css
+     .collapse.show, .collapsing, .accordion-collapse.show { visibility: visible !important; }
+     ```
+  2. **Restrukturisasi Modal Form:**
+     - Mengubah form menjadi direct container modal: `<form class="modal-content border-0 shadow" ...>` di dalam `.modal-dialog.modal-dialog-scrollable`.
+     - Header dan footer modal kini selalu **sticky** (terpaku rapi di atas dan bawah layar), sementara area body dapat di-scroll lancar.
+  3. **Tampilan Hak Akses Modern & Terbuka:**
+     - Mengganti model accordion tertutup dengan card modul modular terbuka yang disatukan di dalam container scrolling terisolasi (`max-height: 340px; overflow-y: auto;`). Seluruh izin hak akses langsung terlihat jelas tanpa harus diklik satu per satu.
+  4. **Pencarian Cepat & Quick Actions:**
+     - Menambahkan input pencarian instan (`#rolePermQuickSearch`) di dalam modal Tambah Role untuk mencari permission secara live berdasarkan nama, modul, maupun slug.
+     - Menyediakan tombol cepat: `Pilih Semua`, `Batal Semua`, serta toggle `Centang Semua Modul` per kategori.
+  5. **Standardisasi Modal Tambah Permission:**
+     - Mengadaptasi struktur `<form class="modal-content">` pada modal Tambah Permission agar konsisten dan bebas masalah scrolling.
+- **Hasil Verifikasi:**
+  - Seluruh checklist hak akses tampil utuh dan jelas tanpa terpotong atau menghilang.
+  - Modal scrollable berjalan normal dengan footer "Batal" dan "Simpan Role" selalu terlihat dan dapat diklik.
+  - Seluruh 55 feature & unit automated tests lulus 100% (251 assertions).
+
 ---
 
 ## 📌 Status Sistem Saat Ini
@@ -803,6 +835,7 @@ Dokumen ini mencatat seluruh riwayat pembaruan, perbaikan, dan penyesuaian fitur
   - ✅ Portal Teknisi Lapangan (`/portal-teknisi`) aktif
   - ✅ Role Baru 'Teknisi' terdaftar di Roles & Permissions (siap dikelola mandiri)
   - ✅ Fitur Tambah Role & Tambah Permission Mandiri untuk Super Admin (`/roles`) aktif
+  - ✅ Modal Tambah Role & Permission Scrollable (Sticky Header/Footer & Live Quick Search Permission) aktif
   - ✅ Sidebar Scrolling Vertikal Aktif (seluruh menu bawah mudah diakses)
   - ✅ Modul Pengajuan Upgrade/Downgrade Paket & Approval Finance aktif
   - ✅ Menu Monitoring Resource Database cPanel (`/resources`) aktif

@@ -167,187 +167,224 @@
                 </div>
             </div>
         </div>
-    </div>
+    <style>
+        .modal-dialog-scrollable .modal-content {
+            max-height: calc(100vh - 3.5rem);
+        }
+        .modal-dialog-scrollable .modal-body {
+            overflow-y: auto;
+        }
+        .perm-scroll-container {
+            max-height: 320px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f8fafc;
+        }
+        .perm-scroll-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .perm-scroll-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        .perm-card-check {
+            transition: all 0.15s ease-in-out;
+        }
+        .perm-card-check:hover {
+            background-color: #f1f5f9;
+            border-color: #cbd5e1 !important;
+        }
+    </style>
 
     @if (auth()->user()?->hasRole('super-admin') || auth()->user()?->can('create', \App\Models\Role::class))
         <!-- MODAL TAMBAH ROLE -->
         <div class="modal fade" id="addRoleModal" tabindex="-1" aria-labelledby="addRoleModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                <div class="modal-content border-0 shadow">
-                    <form method="POST" action="{{ route('roles.store') }}" id="addRoleForm">
-                        @csrf
-                        <div class="modal-header bg-light">
-                            <div>
-                                <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="addRoleModalLabel">
-                                    <i class="bi bi-person-plus-fill text-primary"></i>
-                                    <span>Tambah Role Baru</span>
-                                </h5>
-                                <div class="text-muted small">Definisikan peran baru dalam organisasi Replay BOS beserta hak aksesnya.</div>
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <form method="POST" action="{{ route('roles.store') }}" id="addRoleForm" class="modal-content border-0 shadow">
+                    @csrf
+                    <div class="modal-header bg-light">
+                        <div>
+                            <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="addRoleModalLabel">
+                                <i class="bi bi-person-plus-fill text-primary"></i>
+                                <span>Tambah Role Baru</span>
+                            </h5>
+                            <div class="text-muted small">Definisikan peran baru dalam organisasi Replay BOS beserta hak aksesnya.</div>
                         </div>
-                        <div class="modal-body p-4">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="roleNameInput" class="form-label fw-semibold">Nama Role <span class="text-danger">*</span></label>
-                                    <input type="text" name="name" id="roleNameInput" class="form-control" placeholder="misal: Teknisi OSP, Billing Support" value="{{ old('name') }}" required>
-                                    <div class="form-text small">Nama resmi peran jabatan yang ditampilkan pada sistem.</div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="roleSlugInput" class="form-label fw-semibold">Kode / Slug Unik</label>
-                                    <input type="text" name="slug" id="roleSlugInput" class="form-control font-monospace" placeholder="misal: teknisi-osp (otomatis jika kosong)" value="{{ old('slug') }}">
-                                    <div class="form-text small">Identifier unik (huruf kecil &amp; tanda strip). Otomatis diisi jika kosong.</div>
-                                </div>
-                                <div class="col-12">
-                                    <label for="roleDescInput" class="form-label fw-semibold">Deskripsi Tugas &amp; Tanggung Jawab</label>
-                                    <textarea name="description" id="roleDescInput" rows="2" class="form-control" placeholder="Rangkuman ruang lingkup operasional role ini...">{{ old('description') }}</textarea>
-                                </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="roleNameInput" class="form-label fw-semibold">Nama Role <span class="text-danger">*</span></label>
+                                <input type="text" name="name" id="roleNameInput" class="form-control" placeholder="misal: Teknisi OSP, Billing Support" value="{{ old('name') }}" required>
+                                <div class="form-text small">Nama resmi peran jabatan yang ditampilkan pada sistem.</div>
                             </div>
+                            <div class="col-md-6">
+                                <label for="roleSlugInput" class="form-label fw-semibold">Kode / Slug Unik</label>
+                                <input type="text" name="slug" id="roleSlugInput" class="form-control font-monospace" placeholder="misal: teknisi-osp (otomatis jika kosong)" value="{{ old('slug') }}">
+                                <div class="form-text small">Identifier unik (huruf kecil &amp; tanda strip). Otomatis diisi jika kosong.</div>
+                            </div>
+                            <div class="col-12">
+                                <label for="roleDescInput" class="form-label fw-semibold">Deskripsi Tugas &amp; Tanggung Jawab</label>
+                                <textarea name="description" id="roleDescInput" rows="2" class="form-control" placeholder="Rangkuman ruang lingkup operasional role ini...">{{ old('description') }}</textarea>
+                            </div>
+                        </div>
 
-                            <hr class="my-4 text-muted">
+                        <hr class="my-3 text-muted">
 
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div>
-                                    <div class="fw-bold text-dark"><i class="bi bi-shield-check me-1 text-primary"></i> Hak Akses / Permission Awal (Opsional)</div>
-                                    <div class="small text-muted">Pilih permission yang langsung diberikan ke role baru ini:</div>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleAllPerms">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                            <div>
+                                <div class="fw-bold text-dark"><i class="bi bi-shield-check me-1 text-primary"></i> Hak Akses / Permission Awal (Opsional)</div>
+                                <div class="small text-muted">Centang hak akses yang langsung diberikan ke role baru ini:</div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="btnSelectAllRolePerms">
                                     <i class="bi bi-check2-all me-1"></i> Pilih Semua
                                 </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnDeselectAllRolePerms">
+                                    <i class="bi bi-x-circle me-1"></i> Batal Semua
+                                </button>
                             </div>
+                        </div>
 
-                            <div class="accordion accordion-flush border rounded-3 p-1 mt-2" id="accordionPermissions">
-                                @foreach ($permissionsByModule as $module => $perms)
-                                    <div class="accordion-item">
-                                        <h2 class="accordion-header" id="heading-{{ Str::slug($module) }}">
-                                            <button class="accordion-button collapsed py-2 px-3 bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ Str::slug($module) }}" aria-expanded="false" aria-controls="collapse-{{ Str::slug($module) }}">
-                                                <span class="fw-semibold text-uppercase font-monospace me-2">{{ $module }}</span>
-                                                <span class="badge bg-secondary-subtle text-secondary rounded-pill me-2">{{ $perms->count() }}</span>
-                                                <span class="small text-muted d-none d-sm-inline">Klik untuk melihat pilihan</span>
-                                            </button>
-                                        </h2>
-                                        <div id="collapse-{{ Str::slug($module) }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ Str::slug($module) }}">
-                                            <div class="accordion-body p-3">
-                                                <div class="d-flex justify-content-end mb-2">
-                                                    <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none btn-select-module" data-module="{{ Str::slug($module) }}">
-                                                        Centang Semua Modul {{ strtoupper($module) }}
-                                                    </button>
+                        <!-- Pencarian Cepat Permission -->
+                        <div class="input-group input-group-sm mb-2 shadow-sm">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" id="rolePermQuickSearch" class="form-control border-start-0 ps-0" placeholder="Ketik untuk mencari permission atau modul (misal: ticket, device, user)...">
+                            <button class="btn btn-outline-secondary" type="button" id="btnClearPermSearch" title="Reset pencarian"><i class="bi bi-x-lg"></i></button>
+                        </div>
+
+                        <!-- Container Scrollable Permissions Bebas Overflow -->
+                        <div class="perm-scroll-container border rounded-3 p-3 bg-light">
+                            @foreach ($permissionsByModule as $module => $perms)
+                                <div class="card mb-3 border shadow-none perm-module-card" data-module-name="{{ strtolower($module) }}">
+                                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-2 px-3 border-bottom">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-dark-subtle text-dark border px-2 py-1 text-uppercase font-monospace" style="font-size: 0.72rem;">{{ $module }}</span>
+                                            <span class="small text-muted">({{ $perms->count() }} permission)</span>
+                                        </div>
+                                        <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 fw-semibold btn-select-module" data-module="{{ Str::slug($module) }}" style="font-size: 0.75rem;">
+                                            Centang Semua Modul
+                                        </button>
+                                    </div>
+                                    <div class="card-body p-2 bg-white">
+                                        <div class="row g-2">
+                                            @foreach ($perms as $p)
+                                                <div class="col-sm-6 perm-item" data-perm-search="{{ strtolower($p->name . ' ' . $p->slug . ' ' . $module) }}">
+                                                    <div class="form-check p-2 border rounded perm-card-check h-100 d-flex align-items-start gap-2 m-0 cursor-pointer">
+                                                        <input class="form-check-input mt-1 ms-0 perm-checkbox perm-module-{{ Str::slug($module) }}" type="checkbox" name="permission_ids[]" value="{{ $p->id }}" id="role-perm-{{ $p->id }}" {{ in_array($p->id, old('permission_ids', [])) ? 'checked' : '' }}>
+                                                        <label class="form-check-label small cursor-pointer flex-grow-1" for="role-perm-{{ $p->id }}">
+                                                            <span class="fw-semibold text-dark d-block">{{ $p->name }}</span>
+                                                            <code class="text-primary" style="font-size: 0.72rem;">{{ $p->slug }}</code>
+                                                        </label>
+                                                    </div>
                                                 </div>
-                                                <div class="row g-2">
-                                                    @foreach ($perms as $p)
-                                                        <div class="col-sm-6">
-                                                            <div class="form-check">
-                                                                <input class="form-check-input perm-checkbox perm-module-{{ Str::slug($module) }}" type="checkbox" name="permission_ids[]" value="{{ $p->id }}" id="role-perm-{{ $p->id }}" {{ in_array($p->id, old('permission_ids', [])) ? 'checked' : '' }}>
-                                                                <label class="form-check-label small" for="role-perm-{{ $p->id }}">
-                                                                    <span class="fw-semibold">{{ $p->name }}</span>
-                                                                    <code class="d-block text-muted" style="font-size: 0.72rem;">{{ $p->slug }}</code>
-                                                                </label>
-                                                            </div>
-                                                        </div>
-                                                    @endforeach
-                                                </div>
-                                            </div>
+                                            @endforeach
                                         </div>
                                     </div>
-                                @endforeach
+                                </div>
+                            @endforeach
+                            <div id="noPermFoundNotice" class="text-center py-3 text-muted small d-none">
+                                <i class="bi bi-info-circle me-1"></i> Tidak ada permission yang cocok dengan kata kunci pencarian.
                             </div>
                         </div>
-                        <div class="modal-footer bg-light">
-                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
-                            <button type="submit" class="btn btn-primary d-flex align-items-center gap-1">
-                                <i class="bi bi-save me-1"></i> Simpan Role
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary d-flex align-items-center gap-1 shadow-sm">
+                            <i class="bi bi-save me-1"></i> Simpan Role
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
         <!-- MODAL TAMBAH PERMISSION -->
         <div class="modal fade" id="addPermissionModal" tabindex="-1" aria-labelledby="addPermissionModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-md modal-dialog-centered">
-                <div class="modal-content border-0 shadow">
-                    <form method="POST" action="{{ route('permissions.store') }}" id="addPermissionForm">
-                        @csrf
-                        <div class="modal-header bg-light">
-                            <div>
-                                <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="addPermissionModalLabel">
-                                    <i class="bi bi-shield-plus text-primary"></i>
-                                    <span>Tambah Permission Baru</span>
-                                </h5>
-                                <div class="text-muted small">Daftarkan hak akses permission baru untuk fitur atau modul sistem.</div>
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable">
+                <form method="POST" action="{{ route('permissions.store') }}" id="addPermissionForm" class="modal-content border-0 shadow">
+                    @csrf
+                    <div class="modal-header bg-light">
+                        <div>
+                            <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="addPermissionModalLabel">
+                                <i class="bi bi-shield-plus text-primary"></i>
+                                <span>Tambah Permission Baru</span>
+                            </h5>
+                            <div class="text-muted small">Daftarkan hak akses permission baru untuk fitur atau modul sistem.</div>
                         </div>
-                        <div class="modal-body p-4">
-                            <div class="mb-3">
-                                <label for="permNameInput" class="form-label fw-semibold">Nama Permission <span class="text-danger">*</span></label>
-                                <input type="text" name="name" id="permNameInput" class="form-control" placeholder="misal: Export Laporan Tiket, Restart OLT" value="{{ old('name') }}" required>
-                                <div class="form-text small">Label deskriptif aksi yang mudah dipahami.</div>
-                            </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label for="permNameInput" class="form-label fw-semibold">Nama Permission <span class="text-danger">*</span></label>
+                            <input type="text" name="name" id="permNameInput" class="form-control" placeholder="misal: Export Laporan Tiket, Restart OLT" value="{{ old('name') }}" required>
+                            <div class="form-text small">Label deskriptif aksi yang mudah dipahami.</div>
+                        </div>
 
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-6">
-                                    <label for="permModuleInput" class="form-label fw-semibold">Kategori Modul <span class="text-danger">*</span></label>
-                                    <input type="text" name="module" id="permModuleInput" class="form-control" list="moduleDatalist" placeholder="misal: ticket, device" value="{{ old('module') }}" required>
-                                    <datalist id="moduleDatalist">
-                                        @foreach ($modules as $mod)
-                                            <option value="{{ $mod }}"></option>
-                                        @endforeach
-                                    </datalist>
-                                    <div class="form-text small">Pilih modul yang ada atau ketik modul baru.</div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="permSlugInput" class="form-label fw-semibold">Kode Slug <span class="text-danger">*</span></label>
-                                    <input type="text" name="slug" id="permSlugInput" class="form-control font-monospace" placeholder="misal: ticket.export" value="{{ old('slug') }}" required>
-                                    <div class="form-text small">Format standar: <code>modul.aksi</code>.</div>
-                                </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="permModuleInput" class="form-label fw-semibold">Kategori Modul <span class="text-danger">*</span></label>
+                                <input type="text" name="module" id="permModuleInput" class="form-control" list="moduleDatalist" placeholder="misal: ticket, device" value="{{ old('module') }}" required>
+                                <datalist id="moduleDatalist">
+                                    @foreach ($modules as $mod)
+                                        <option value="{{ $mod }}"></option>
+                                    @endforeach
+                                </datalist>
+                                <div class="form-text small">Pilih modul yang ada atau ketik modul baru.</div>
                             </div>
-
-                            <div class="mb-3">
-                                <label for="permDescInput" class="form-label fw-semibold">Deskripsi Permission</label>
-                                <textarea name="description" id="permDescInput" rows="2" class="form-control" placeholder="Penjelasan mengenai hak akses ini...">{{ old('description') }}</textarea>
+                            <div class="col-md-6">
+                                <label for="permSlugInput" class="form-label fw-semibold">Kode Slug <span class="text-danger">*</span></label>
+                                <input type="text" name="slug" id="permSlugInput" class="form-control font-monospace" placeholder="misal: ticket.export" value="{{ old('slug') }}" required>
+                                <div class="form-text small">Format standar: <code>modul.aksi</code>.</div>
                             </div>
+                        </div>
 
-                            <div class="mb-1">
-                                <label class="form-label fw-semibold d-flex justify-content-between align-items-center">
-                                    <span>Terapkan ke Role</span>
-                                    <span class="small text-muted">Pilih role yang langsung memiliki izin ini</span>
-                                </label>
-                                <div class="p-3 bg-light border rounded-3" style="max-height: 180px; overflow-y: auto;">
-                                    <div class="row g-2">
-                                        @foreach ($roles as $r)
-                                            <div class="col-sm-6">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="role_ids[]" value="{{ $r->id }}" id="perm-role-{{ $r->id }}" {{ $r->slug === 'super-admin' || in_array($r->id, old('role_ids', [])) ? 'checked' : '' }}>
-                                                    <label class="form-check-label small" for="perm-role-{{ $r->id }}">
-                                                        <span class="fw-semibold">{{ $r->name }}</span>
-                                                        @if ($r->slug === 'super-admin')
-                                                            <span class="badge bg-primary-subtle text-primary border" style="font-size: 0.65rem;">Default</span>
-                                                        @endif
-                                                    </label>
-                                                </div>
+                        <div class="mb-3">
+                            <label for="permDescInput" class="form-label fw-semibold">Deskripsi Permission</label>
+                            <textarea name="description" id="permDescInput" rows="2" class="form-control" placeholder="Penjelasan mengenai hak akses ini...">{{ old('description') }}</textarea>
+                        </div>
+
+                        <div class="mb-1">
+                            <label class="form-label fw-semibold d-flex justify-content-between align-items-center">
+                                <span>Terapkan ke Role</span>
+                                <span class="small text-muted">Pilih role yang langsung memiliki izin ini</span>
+                            </label>
+                            <div class="p-3 bg-light border rounded-3" style="max-height: 180px; overflow-y: auto;">
+                                <div class="row g-2">
+                                    @foreach ($roles as $r)
+                                        <div class="col-sm-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="role_ids[]" value="{{ $r->id }}" id="perm-role-{{ $r->id }}" {{ $r->slug === 'super-admin' || in_array($r->id, old('role_ids', [])) ? 'checked' : '' }}>
+                                                <label class="form-check-label small" for="perm-role-{{ $r->id }}">
+                                                    <span class="fw-semibold">{{ $r->name }}</span>
+                                                    @if ($r->slug === 'super-admin')
+                                                        <span class="badge bg-primary-subtle text-primary border" style="font-size: 0.65rem;">Default</span>
+                                                    @endif
+                                                </label>
                                             </div>
-                                        @endforeach
-                                    </div>
+                                        </div>
+                                    @endforeach
                                 </div>
                             </div>
                         </div>
-                        <div class="modal-footer bg-light">
-                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
-                            <button type="submit" class="btn btn-primary d-flex align-items-center gap-1">
-                                <i class="bi bi-save me-1"></i> Simpan Permission
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary d-flex align-items-center gap-1 shadow-sm">
+                            <i class="bi bi-save me-1"></i> Simpan Permission
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     @endif
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // 1. Search filter untuk tabel Permission
+            // 1. Search filter untuk tabel Permission (Tab 2)
             const searchInput = document.getElementById('permissionSearchInput');
             if (searchInput) {
                 searchInput.addEventListener('input', function () {
@@ -360,7 +397,48 @@
                 });
             }
 
-            // 2. Auto-slug generator untuk Tambah Role
+            // 2. Pencarian cepat permission di dalam Modal Tambah Role
+            const rolePermSearch = document.getElementById('rolePermQuickSearch');
+            const btnClearPermSearch = document.getElementById('btnClearPermSearch');
+            const noPermNotice = document.getElementById('noPermFoundNotice');
+
+            function filterRolePermissions(keyword) {
+                const q = keyword.toLowerCase().trim();
+                let visibleCount = 0;
+
+                document.querySelectorAll('.perm-module-card').forEach(card => {
+                    let moduleHasVisible = false;
+                    card.querySelectorAll('.perm-item').forEach(item => {
+                        const searchData = item.getAttribute('data-perm-search') || '';
+                        const matches = !q || searchData.includes(q);
+                        item.style.display = matches ? '' : 'none';
+                        if (matches) {
+                            moduleHasVisible = true;
+                            visibleCount++;
+                        }
+                    });
+                    card.style.display = moduleHasVisible ? '' : 'none';
+                });
+
+                if (noPermNotice) {
+                    noPermNotice.classList.toggle('d-none', visibleCount > 0);
+                }
+            }
+
+            if (rolePermSearch) {
+                rolePermSearch.addEventListener('input', function () {
+                    filterRolePermissions(this.value);
+                });
+            }
+
+            if (btnClearPermSearch && rolePermSearch) {
+                btnClearPermSearch.addEventListener('click', function () {
+                    rolePermSearch.value = '';
+                    filterRolePermissions('');
+                });
+            }
+
+            // 3. Auto-slug generator untuk Tambah Role
             const roleNameInput = document.getElementById('roleNameInput');
             const roleSlugInput = document.getElementById('roleSlugInput');
             let isRoleSlugManuallyEdited = false;
@@ -385,7 +463,7 @@
                 });
             }
 
-            // 3. Auto-slug helper untuk Tambah Permission dari Modul & Nama
+            // 4. Auto-slug helper untuk Tambah Permission dari Modul & Nama
             const permNameInput = document.getElementById('permNameInput');
             const permModuleInput = document.getElementById('permModuleInput');
             const permSlugInput = document.getElementById('permSlugInput');
@@ -416,29 +494,44 @@
             if (permNameInput) permNameInput.addEventListener('input', updatePermSlug);
             if (permModuleInput) permModuleInput.addEventListener('input', updatePermSlug);
 
-            // 4. Toggle all permissions in Add Role Modal
-            const btnToggleAll = document.getElementById('btnToggleAllPerms');
-            if (btnToggleAll) {
-                let allChecked = false;
-                btnToggleAll.addEventListener('click', function () {
-                    const checkboxes = document.querySelectorAll('.perm-checkbox');
-                    allChecked = !allChecked;
-                    checkboxes.forEach(cb => cb.checked = allChecked);
-                    this.innerHTML = allChecked
-                        ? '<i class="bi bi-x-circle me-1"></i> Batal Pilih Semua'
-                        : '<i class="bi bi-check2-all me-1"></i> Pilih Semua';
+            // 5. Tombol Pilih Semua & Batal Semua Permissions pada Modal Tambah Role
+            const btnSelectAll = document.getElementById('btnSelectAllRolePerms');
+            const btnDeselectAll = document.getElementById('btnDeselectAllRolePerms');
+
+            if (btnSelectAll) {
+                btnSelectAll.addEventListener('click', function () {
+                    document.querySelectorAll('.perm-checkbox').forEach(cb => {
+                        // Hanya centang item yang sedang terlihat (sesuai filter pencarian)
+                        const permItem = cb.closest('.perm-item');
+                        if (!permItem || permItem.style.display !== 'none') {
+                            cb.checked = true;
+                        }
+                    });
                 });
             }
 
-            // 5. Select all per module in Add Role Modal
+            if (btnDeselectAll) {
+                btnDeselectAll.addEventListener('click', function () {
+                    document.querySelectorAll('.perm-checkbox').forEach(cb => {
+                        const permItem = cb.closest('.perm-item');
+                        if (!permItem || permItem.style.display !== 'none') {
+                            cb.checked = false;
+                        }
+                    });
+                });
+            }
+
+            // 6. Centang Semua per Modul pada Modal Tambah Role
             document.querySelectorAll('.btn-select-module').forEach(btn => {
                 btn.addEventListener('click', function () {
                     const mod = this.getAttribute('data-module');
                     const checkboxes = document.querySelectorAll(`.perm-module-${mod}`);
                     const anyUnchecked = Array.from(checkboxes).some(cb => !cb.checked);
                     checkboxes.forEach(cb => cb.checked = anyUnchecked);
+                    this.textContent = anyUnchecked ? 'Batal Centang Modul' : 'Centang Semua Modul';
                 });
             });
         });
     </script>
 @endsection
+
