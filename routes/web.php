@@ -150,6 +150,8 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureTwoFactorIsEnabled::class]
     Route::post('/users/{user}/enable', [UserController::class, 'enable'])->name('users.enable');
 
     Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+    Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
+    Route::post('/permissions', [RoleController::class, 'storePermission'])->name('permissions.store');
     Route::get('/roles/{role}/edit', [RoleController::class, 'edit'])->name('roles.edit');
     Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
 

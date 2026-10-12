@@ -43,6 +43,7 @@ Dokumen ini mencatat seluruh riwayat pembaruan, perbaikan, dan penyesuaian fitur
 | 33 | **Minggu, 11 Oktober 2026 — 23:36:00 WIB** | Deployment Hosting / Vendor Package | DevOps / Deployment | Pembuatan arsip `vendor.zip` (43 MB) di root project untuk memfasilitasi migrasi & deployment langsung ke cPanel hosting tanpa Composer CLI. |
 | 34 | **Minggu, 11 Oktober 2026 — 23:54:00 WIB** | Symlink Storage & Fallback Foto cPanel | Infrastructure & Bugfix | Peningkatan endpoint `/storage-link` (auto-create subfolder, permission check, feedback HTML informatif) dan penambahan route fallback `/storage/{path}` agar foto absensi & profil karyawan tetap tampil 100% pada hosting yang membatasi symlink. |
 | 35 | **Senin, 12 Oktober 2026 — 00:02:00 WIB** | Konfigurasi Filesystem Storage | Config / Security | Penonaktifan opsi bawaan `'serve' => false` pada disk local dan public (`config/filesystems.php`) untuk mencegah konflik routing asset storage dan mengoptimalkan kompatibilitas server cPanel. |
+| 36 | **Senin, 12 Oktober 2026 — 11:45:00 WIB** | Penambahan Fitur Tambah Role & Permission Super Admin | Feature & Security | Penambahan tombol aksi dan modal Tambah Role (auto-slug & pilih permission awal), modal Tambah Permission (modul, slug, assign ke role), tab navigasi Daftar Permission, serta otorisasi Policy untuk Super Admin. |
 
 ---
 
@@ -749,6 +750,42 @@ Dokumen ini mencatat seluruh riwayat pembaruan, perbaikan, dan penyesuaian fitur
 
 ---
 
+#### ⏰ Pukul 11:45:00 WIB — Penambahan Fitur Tambah Role & Permission Mandiri untuk Super Admin
+- **Latar Belakang & Kebutuhan:**
+  - Sebelumnya pada halaman **Roles & Permissions** (`/roles`), pengguna hanya dapat melihat tabel role yang sudah ada dan mengelola checklist permission per-role.
+  - Dibutuhkan fitur bagi Super Admin untuk dapat **menambahkan Role baru** (mendefinisikan nama peran, slug unik, deskripsi, dan permission awal) serta **menambahkan Permission baru** (nama permission, kode slug, modul kategori, deskripsi, dan penetapan role penerima) langsung dari antarmuka aplikasi tanpa perlu menjalankan query database atau migrasi seeder secara manual.
+- **File Terkait:**
+  1. [`app/Policies/RolePolicy.php`](file:///home/prtmagum/Documents/REPLAY%20NET%20ID/LOCAL/replay-bos-prod/replay-noc/app/Policies/RolePolicy.php)
+  2. [`app/Http/Requests/StoreRoleRequest.php`](file:///home/prtmagum/Documents/REPLAY%20NET%20ID/LOCAL/replay-bos-prod/replay-noc/app/Http/Requests/StoreRoleRequest.php)
+  3. [`app/Http/Requests/StorePermissionRequest.php`](file:///home/prtmagum/Documents/REPLAY%20NET%20ID/LOCAL/replay-bos-prod/replay-noc/app/Http/Requests/StorePermissionRequest.php)
+  4. [`app/Services/RoleService.php`](file:///home/prtmagum/Documents/REPLAY%20NET%20ID/LOCAL/replay-bos-prod/replay-noc/app/Services/RoleService.php)
+  5. [`app/Http/Controllers/RoleController.php`](file:///home/prtmagum/Documents/REPLAY%20NET%20ID/LOCAL/replay-bos-prod/replay-noc/app/Http/Controllers/RoleController.php)
+  6. [`routes/web.php`](file:///home/prtmagum/Documents/REPLAY%20NET%20ID/LOCAL/replay-bos-prod/replay-noc/routes/web.php)
+  7. [`resources/views/roles/index.blade.php`](file:///home/prtmagum/Documents/REPLAY%20NET%20ID/LOCAL/replay-bos-prod/replay-noc/resources/views/roles/index.blade.php)
+  8. [`tests/Feature/RoleAndPermissionManagementTest.php`](file:///home/prtmagum/Documents/REPLAY%20NET%20ID/LOCAL/replay-bos-prod/replay-noc/tests/Feature/RoleAndPermissionManagementTest.php)
+- **Tindakan Teknis & Solusi:**
+  1. **Kebijakan Otorisasi (Policy):**
+     - Memperbarui `RolePolicy.php` dengan method `create()` dan `createPermission()` yang mengizinkan user dengan role `super-admin` atau permission `role.manage`.
+  2. **Validasi Request:**
+     - Membuat `StoreRoleRequest.php` untuk validasi nama (wajib), slug unik (opsional, auto-slug jika kosong), deskripsi, dan validasi keberadaan ID permission.
+     - Membuat `StorePermissionRequest.php` untuk validasi nama (wajib), slug unik dengan regex format `^[a-zA-Z0-9_\.\-]+$`, modul kategori (wajib), dan validasi relasi role.
+  3. **Service Layer & Audit Trail (`RoleService.php`):**
+     - Menambahkan method `createRole(array $data, User $actor, Request $request)` yang membuat record role, sinkronisasi permission awal, dan mencatat audit log `CREATE_ROLE`.
+     - Menambahkan method `createPermission(array $data, User $actor, Request $request)` yang membuat record permission, sinkronisasi role awal, dan mencatat audit log `CREATE_PERMISSION`.
+  4. **Controller & Routing:**
+     - Menambahkan method `store()` dan `storePermission()` pada `RoleController.php`.
+     - Mendaftarkan route `POST /roles` (`roles.store`) dan `POST /permissions` (`permissions.store`) pada `routes/web.php`.
+  5. **Antarmuka Pengguna (UI/UX):**
+     - **Tombol Aksi Header:** Menambahkan tombol "+ Tambah Permission" dan "+ Tambah Role" di kanan atas halaman Roles & Permissions khusus untuk Super Admin.
+     - **Navigasi Tab:** Menambahkan tab `Daftar Role` dan `Daftar Permission` sehingga pengguna dapat langsung meninjau seluruh permission beserta relasi rolenya secara transparan dilengkapi live search filter.
+     - **Modal Tambah Role:** Dilengkapi auto-slug otomatis, accordion per modul, tombol "Pilih Semua", dan checkbox interaktif.
+     - **Modal Tambah Permission:** Dilengkapi datalist saran modul, auto-generate kode slug dari modul & nama, serta opsi assign langsung ke role yang ada.
+  6. **Automated Testing:**
+     - Dibuatkan pengujian menyeluruh pada `tests/Feature/RoleAndPermissionManagementTest.php` (7 test baru, 35 assertions).
+     - Seluruh **55 automated tests (251 assertions) lulus 100%**.
+
+---
+
 ## 📌 Status Sistem Saat Ini
 
 - **Framework Backend:** Laravel 11 (PHP 8.2+)
@@ -765,6 +802,7 @@ Dokumen ini mencatat seluruh riwayat pembaruan, perbaikan, dan penyesuaian fitur
   - ✅ Portal Karyawan & Portal Reseller aktif
   - ✅ Portal Teknisi Lapangan (`/portal-teknisi`) aktif
   - ✅ Role Baru 'Teknisi' terdaftar di Roles & Permissions (siap dikelola mandiri)
+  - ✅ Fitur Tambah Role & Tambah Permission Mandiri untuk Super Admin (`/roles`) aktif
   - ✅ Sidebar Scrolling Vertikal Aktif (seluruh menu bawah mudah diakses)
   - ✅ Modul Pengajuan Upgrade/Downgrade Paket & Approval Finance aktif
   - ✅ Menu Monitoring Resource Database cPanel (`/resources`) aktif

@@ -17,7 +17,7 @@
     <a href="https://tailwindcss.com"><img src="https://img.shields.io/badge/Tailwind_CSS-v4.0-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS v4" /></a>
     <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" /></a>
     <a href="https://mariadb.org"><img src="https://img.shields.io/badge/Database-MariaDB%20%2F%20MySQL-003545?style=for-the-badge&logo=mariadb&logoColor=white" alt="MariaDB" /></a>
-    <a href="https://phpunit.de"><img src="https://img.shields.io/badge/Tests-48%20Passed%20(100%25)-22c55e?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Tests Status" /></a>
+    <a href="https://phpunit.de"><img src="https://img.shields.io/badge/Tests-55%20Passed%20(100%25)-22c55e?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Tests Status" /></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="License MIT" /></a>
   </p>
 
